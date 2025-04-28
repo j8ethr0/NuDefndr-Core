@@ -1,6 +1,6 @@
-// Copyright (c) 2025 dro1d.org - All rights reserved.
+// Copyright (c) 2025 Fergal Monahan
+// Released under the MIT License. See LICENSE file for details.
 //
-// Released under the MIT License.
-// See LICENSE file for details.
 // NuDefndr App - Core Privacy Component
-
+// App Website: https://nudefndr.com
+// Developer: https://dro1d.org

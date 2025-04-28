@@ -2,7 +2,7 @@
 
 This repository contains selected open-source components from the NuDefndr iOS app, focusing on the core privacy and analysis functions.
 
-**NuDefndr App:** https://dro1d.org/nuDefndr.html
+**NuDefndr App:** https://nuDefndr.com
 
 ## Purpose of This Repository
 
