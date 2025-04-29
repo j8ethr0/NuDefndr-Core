@@ -4,11 +4,10 @@
 // NuDefndr App - Core Privacy Component
 // App Website: https://nudefndr.com
 // Developer: https://dro1d.org
-// SensitiveContentService.swift
+// ScanRangeOption.swift
 
 
-class SensitiveContentService {
-
-	private let analyzer = SCSensitivityAnalyzer()
+enum ScanRangeOption: String, CaseIterable, Identifiable {
+	case last7Days =
 
 ...	// Pending App Release
