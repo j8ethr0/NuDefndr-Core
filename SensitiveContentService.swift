@@ -4,11 +4,52 @@
 // NuDefndr App - Core Privacy Component
 // App Website: https://nudefndr.com
 // Developer: https://dro1d.org
-// SensitiveContentService.swift
 
+import Foundation
+import SensitiveContentAnalysis
+import UIKit
+import CoreGraphics
 
 class SensitiveContentService {
 
 	private let analyzer = SCSensitivityAnalyzer()
 
-...	// Pending App Release
+	func analyzeImage(imageData: Data, assetIdentifier: String) async -> Bool {
+		guard let uiImage = UIImage(data: imageData) else {
+			return false
+		}
+		guard let cgImage = uiImage.cgImage else {
+			return false
+		}
+		do {
+			let result = try await analyzer.analyzeImage(cgImage)
+			return result.isSensitive
+		} catch {
+			return false
+		}
+	}
+
+	func analyzeImage(at imageURL: URL) async -> Bool {
+		var shouldStopAccessing = false
+		if imageURL.isFileURL {
+			shouldStopAccessing = imageURL.startAccessingSecurityScopedResource()
+			if !shouldStopAccessing {
+				// Warning: *redacted*
+			}
+		}
+
+		defer {
+			if shouldStopAccessing {
+				imageURL.stopAccessingSecurityScopedResource()
+			}
+		}
+
+		do {
+			let imageData = try Data(contentsOf: imageURL)
+			let identifier = imageURL.absoluteString
+			return await analyzeImage(imageData: imageData, assetIdentifier: identifier)
+		} catch {
+			return false
+		}
+	}
+}
