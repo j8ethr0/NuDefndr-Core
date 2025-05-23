@@ -17,7 +17,7 @@ The primary goal of open-sourcing these components is **transparency**. We want 
 * **`SensitiveContentService.swift`**: This class encapsulates the interaction with Apple's `SensitiveContentAnalysis` framework, showing how image data (converted to `CGImage`) is passed to the on-device analyzer.
 * **`ScanRangeOption.swift`**: Defining the date range options (last modified) used for scanning within the app.
 
-*(Note: This repository does not contain the full application source code, including UI, photo library interaction logic, incremental scanning logic, or other features.)*
+*(Note: This repository does not contain the full application source code, including UI, photo library interaction logic, incremental scanning logic, or other features. The code provided here represents a **stable, publicly available version** of these core components.)*
 
 ## License
 
