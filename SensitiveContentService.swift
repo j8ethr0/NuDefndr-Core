@@ -1,10 +1,16 @@
-// Copyright (c) 2025 Fergal Monahan
+// Copyright (c) 2025 Dro1d Labs Limited
 // Released under the MIT License. See LICENSE file for details.
 //
 // NuDefndr App - Core Privacy Component
 // App Website: https://nudefndr.com
-// Developer: https://dro1d.org
+// Developer: Dro1d Labs
 
+/*
+ * Privacy Guarantee: This service performs analysis entirely on-device
+ * using Apple's SensitiveContentAnalysis framework. No image data or 
+ * analysis results are transmitted over the network.
+ */
+ 
 import Foundation
 import SensitiveContentAnalysis
 import UIKit

@@ -1,28 +1,44 @@
 # NuDefndr - Core Privacy Components
 
-This repository contains selected open-source components from the NuDefndr iOS app, focusing on the core privacy and analysis functions.
+This repository contains auditable open-source components from the NuDefndr iOS app, focusing on core privacy and security functions.
 
-**NuDefndr App:** https://nuDefndr.com
+**App Website**: https://nudefndr.com
 
-## Purpose of This Repository
+## Privacy Guarantees (Verifiable)
 
-The primary goal of open-sourcing these components is **transparency**. We want users, researchers, and privacy advocates to be able to verify our core privacy claims:
+- **Zero Network Transmission** - No network code in analysis pipeline
+- **On-Device Analysis Only** - Apple's SensitiveContentAnalysis framework  
+- **Military-Grade Encryption** - AES-256 ChaCha20-Poly1305 implementation
+- **Panic Mode Protection** - Dual-vault architecture for emergency situations
 
-* Sensitive content analysis is performed **entirely on the user's device** using Apple's native `SensitiveContentAnalysis` framework.
-* Image data is **not transmitted** off the device for analysis by NuDefndr.
-* **No data is ever transmitted** off the device by NuDefndr.
+## Included Components
 
-## Included Files
+### Core Analysis
+- `SensitiveContentService.swift` - Apple framework integration
+- `ScanRangeOption.swift` - Date range definitions
 
-* **`SensitiveContentService.swift`**: This class encapsulates the interaction with Apple's `SensitiveContentAnalysis` framework, showing how image data (converted to `CGImage`) is passed to the on-device analyzer.
-* **`ScanRangeOption.swift`**: Defining the date range options (last modified) used for scanning within the app.
+### Security & Encryption  
+- `VaultCrypto.swift` - Encryption/decryption implementation
+- `KeychainSecure.swift` - Secure key storage utilities
+- `PanicModeCore.swift` - Dual-vault architecture
 
-*(Note: This repository does not contain the full application source code, including UI, photo library interaction logic, incremental scanning logic, or other features. The code provided here represents a **stable, publicly available version** of these core components.)*
+## Security Architecture
+
+**Vault Encryption**: AES-256 with device-specific keys stored in Secure Enclave  
+**Panic Mode**: Separate decoy vault accessible via emergency PIN  
+**Key Management**: Hardware-backed keychain with biometric protection  
+
+## Independent Verification
+
+Security researchers can verify:
+- Image data never leaves the device during analysis
+- Encrypted vault data is unreadable without device + biometric access  
+- Panic PIN creates truly separate, isolated storage containers
 
 ## License
 
-The code in this repository is released under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+Released under the MIT License. See LICENSE file for details.
 
 ## Disclaimer
 
-This code is provided for transparency purposes. It represents core components but is not the complete, buildable application.
+This code is provided for transparency purposes. It represents select core components but is not the complete, buildable application.

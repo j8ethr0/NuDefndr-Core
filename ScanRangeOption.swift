@@ -1,9 +1,9 @@
-// Copyright (c) 2025 Fergal Monahan
+// Copyright (c) 2025 Dro1d Labs Limited
 // Released under the MIT License. See LICENSE file for details.
 //
 // NuDefndr App - Core Privacy Component
 // App Website: https://nudefndr.com
-// Developer: https://dro1d.org
+// Developer: Dro1d Labs
 
 import Foundation
 
@@ -25,14 +25,14 @@ enum ScanRangeOption: String, CaseIterable, Identifiable {
 		}
 	}
 
-	var startDate: Date? {    // *redacted*
-		let calendar = Calendar.current
+	// data minimization
+	var description: String {
 		switch self {
-		case .last7Days: return calendar.date(byAdding: .day, value: -7, to: Date())
-		case .last30Days: return calendar.date(byAdding: .day, value: -30, to: Date())
-		case .last90Days: return calendar.date(byAdding: .day, value: -90, to: Date())
-		case .last1Year: return calendar.date(byAdding: .year, value: -1, to: Date())
-		case .allTime: return nil
+		case .last7Days: return "Scans photos modified in the last 7 days (Free)"
+		case .last30Days: return "Scans photos modified in the last 30 days (Pro)"
+		case .last90Days: return "Scans photos modified in the last 90 days (Pro)" 
+		case .last1Year: return "Scans photos modified in the last year (Pro)"
+		case .allTime: return "Scans entire photo library (Pro)"
 		}
 	}
 }
