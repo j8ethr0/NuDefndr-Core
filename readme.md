@@ -42,3 +42,5 @@ Released under the MIT License. See LICENSE file for details.
 ## Disclaimer
 
 This code is provided for transparency purposes. It represents select core components but is not the complete, buildable application.
+
+Developer: Dro1d Labs
