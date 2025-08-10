@@ -59,3 +59,44 @@ class SensitiveContentService {
 		}
 	}
 }
+
+// Advanced Analysis
+
+extension SensitiveContentService {
+  
+  /// Batch analysis // progress tracking
+  func analyzeBatch(_ urls: [URL], progressCallback: @escaping (Double) -> Void) async -> [URL: Bool] {
+	  var results: [URL: Bool] = [:]
+	  
+	  for (index, url) in urls.enumerated() {
+		  let result = await analyzeImage(at: url)
+		  results[url] = result
+		  
+		  let progress = Double(index + 1) / Double(urls.count)
+		  await MainActor.run {
+			  progressCallback(progress)
+		  }
+	  }
+	  
+	  return results
+  }
+  
+  /// Memory-optimized analysis for large images
+  func analyzeWithMemoryOptimization(imageData: Data, maxSize: CGSize = CGSize(width: 2048, height: 2048)) async -> Bool {
+	  // memory optimization logic redacted
+	  return await analyzeImage(imageData: imageData, assetIdentifier: "memory_optimized")
+  }
+}
+
+// MARK: - Analysis Statistics
+
+class AnalysisStatsCollector: ObservableObject {
+  @Published var totalAnalyzed: Int = 0
+  @Published var averageAnalysisTime: TimeInterval = 0
+  @Published var memoryUsage: Int = 0
+  
+  func recordAnalysis(duration: TimeInterval) {
+	  totalAnalyzed += 1
+	  averageAnalysisTime = (averageAnalysisTime * Double(totalAnalyzed - 1) + duration) / Double(totalAnalyzed)
+  }
+}
