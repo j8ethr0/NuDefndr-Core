@@ -38,3 +38,90 @@ enum ScanRangeOption: String, CaseIterable, Identifiable {
 }
 
 let freeScanRangeOption = ScanRangeOption.last7Days
+
+extension ScanRangeOption {
+  
+  static func customRange(from startDate: Date, to endDate: Date) -> CustomScanRange {
+	  return CustomScanRange(startDate: startDate, endDate: endDate)
+  }
+  
+  /// Estimated scan duration based on photo library size
+  func estimatedDuration(for photoCount: Int) -> TimeInterval {
+	  let baseTimePerPhoto: TimeInterval = 0.5 // 500ms per photo
+	  let rangeMultiplier: Double
+	  
+	  switch self {
+	  case .last7Days: rangeMultiplier = 0.1
+	  case .last30Days: rangeMultiplier = 0.3
+	  case .last90Days: rangeMultiplier = 0.6
+	  case .last1Year: rangeMultiplier = 0.8
+	  case .allTime: rangeMultiplier = 1.0
+	  }
+	  
+	  return baseTimePerPhoto * Double(photoCount) * rangeMultiplier
+  }
+  
+  /// Memory usage estimation
+  var estimatedMemoryUsage: MemoryUsageLevel {
+	  switch self {
+	  case .last7Days: return .low
+	  case .last30Days: return .medium
+	  case .last90Days, .last1Year: return .high
+	  case .allTime: return .maximum
+	  }
+  }
+}
+
+struct CustomScanRange {
+  let startDate: Date
+  let endDate: Date
+  let id = UUID()
+  
+  var description: String {
+	  let formatter = DateFormatter()
+	  formatter.dateStyle = .medium
+	  return "Custom: \(formatter.string(from: startDate)) - \(formatter.string(from: endDate))"
+  }
+  
+  var isFree: Bool { false }
+}
+
+enum MemoryUsageLevel: String, CaseIterable {
+  case low = "Low (< 100MB)"
+  case medium = "Medium (100-500MB)"
+  case high = "High (500MB-1GB)"
+  case maximum = "Maximum (> 1GB)"
+  
+  var color: String {
+	  switch self {
+	  case .low: return "green"
+	  case .medium: return "yellow"  
+	  case .high: return "orange"
+	  case .maximum: return "red"
+	  }
+  }
+}
+
+struct ScanPerformanceMetrics {
+  let scanRange: ScanRangeOption
+  let photosAnalyzed: Int
+  let totalDuration: TimeInterval
+  let averageTimePerPhoto: TimeInterval
+  let peakMemoryUsage: Int
+  let sensitiveContentFound: Int
+  
+  var efficiency: ScanEfficiency {
+	  if averageTimePerPhoto < 0.3 { return .excellent }
+	  if averageTimePerPhoto < 0.6 { return .good }
+	  if averageTimePerPhoto < 1.0 { return .fair }
+	  return .poor
+  }
+}
+
+enum ScanEfficiency: String {
+  case excellent = "Excellent"
+  case good = "Good"
+  case fair = "Fair" 
+  case poor = "Needs Optimization"
+}
+

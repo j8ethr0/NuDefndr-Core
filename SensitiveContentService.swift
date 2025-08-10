@@ -15,6 +15,7 @@ import Foundation
 import SensitiveContentAnalysis
 import UIKit
 import CoreGraphics
+import SwiftUI
 
 class SensitiveContentService {
 
@@ -64,7 +65,6 @@ class SensitiveContentService {
 
 extension SensitiveContentService {
   
-  /// Batch analysis // progress tracking
   func analyzeBatch(_ urls: [URL], progressCallback: @escaping (Double) -> Void) async -> [URL: Bool] {
 	  var results: [URL: Bool] = [:]
 	  
@@ -81,14 +81,12 @@ extension SensitiveContentService {
 	  return results
   }
   
-  /// Memory-optimized analysis for large images
+  /// Memory-optimized analysis
   func analyzeWithMemoryOptimization(imageData: Data, maxSize: CGSize = CGSize(width: 2048, height: 2048)) async -> Bool {
-	  // memory optimization logic redacted
+	  // memory optimization
 	  return await analyzeImage(imageData: imageData, assetIdentifier: "memory_optimized")
   }
 }
-
-// MARK: - Analysis Statistics
 
 class AnalysisStatsCollector: ObservableObject {
   @Published var totalAnalyzed: Int = 0
