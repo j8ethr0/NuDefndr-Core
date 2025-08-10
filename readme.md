@@ -1,6 +1,6 @@
 # NuDefndr - Core Privacy Components
 
-This repository contains auditable open-source components from the NuDefndr iOS app, focusing on core privacy and security functions.
+This repository contains auditable open-source components from the NuDefndr iOS app [the app detects sensitive content - NSFW, nude & explicit images - in the iOS Photos app], focusing on core privacy and security functions.
 
 **App Website**: https://nudefndr.com
 
