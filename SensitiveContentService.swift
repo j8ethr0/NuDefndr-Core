@@ -20,6 +20,7 @@ import SwiftUI
 class SensitiveContentService {
 
 	private let analyzer = SCSensitivityAnalyzer()
+    private let logger = Logger(subsystem: // *redacted*)
 
 	func analyzeImage(imageData: Data, assetIdentifier: String) async -> Bool {
 		guard let uiImage = UIImage(data: imageData) else {
