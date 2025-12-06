@@ -20,9 +20,13 @@ import SwiftUI
 class SensitiveContentService {
 
 	private let analyzer = SCSensitivityAnalyzer()
-    private let logger = Logger(subsystem: // *redacted*)
+	private let logger = Logger(subsystem: // *redacted*)
+	private let performanceMonitor = PerformanceMonitor.shared
 
 	func analyzeImage(imageData: Data, assetIdentifier: String) async -> Bool {
+		// Thermal awareness check
+		await performanceMonitor.checkThermalState()
+		
 		guard let uiImage = UIImage(data: imageData) else {
 			return false
 		}
@@ -31,6 +35,7 @@ class SensitiveContentService {
 		}
 		do {
 			let result = try await analyzer.analyzeImage(cgImage)
+			performanceMonitor.recordAnalysis(duration: 0.0) // Placeholder
 			return result.isSensitive
 		} catch {
 			return false
@@ -59,6 +64,34 @@ class SensitiveContentService {
 		} catch {
 			return false
 		}
+	}
+	
+	/// Thermal-aware batch analysis with adaptive throttling
+	func analyzeBatchWithThermalAwareness(_ urls: [URL], progressCallback: @escaping (Double) -> Void) async -> [URL: Bool] {
+		var results: [URL: Bool] = [:]
+		let batchSize = performanceMonitor.adaptiveBatchSize()
+		
+		for (index, url) in urls.enumerated() {
+			// Check thermal state before each batch
+			if index % batchSize == 0 {
+				await performanceMonitor.checkThermalState()
+			}
+			
+			let result = await analyzeImage(at: url)
+			results[url] = result
+			
+			let progress = Double(index + 1) / Double(urls.count)
+			await MainActor.run {
+				progressCallback(progress)
+			}
+			
+			// Memory pressure handling
+			if performanceMonitor.isMemoryPressureHigh() {
+				await Task.sleep(nanoseconds: 100_000_000) // 100ms cooldown
+			}
+		}
+		
+		return results
 	}
 }
 
