@@ -11,6 +11,55 @@ import Security
 
 // Encryption Implementation Overview (VaultManager Core)
 class VaultCrypto {
+	
+	// MARK: - Hardware Acceleration Detection
+	
+	enum CryptoBackend: String {
+		case secureEnclave = "Secure Enclave (Hardware)"
+		case commonCrypto = "CommonCrypto (Accelerated)"
+		case cryptoKit = "CryptoKit (Software)"
+	}
+	
+	static func detectCryptoBackend() -> CryptoBackend {
+		// Check for Secure Enclave availability (A7+ chips)
+		if isSecureEnclaveAvailable() {
+			return .secureEnclave
+		}
+		
+		// Check for hardware AES acceleration (most modern ARM chips)
+		if hasHardwareAESAcceleration() {
+			return .commonCrypto
+		}
+		
+		return .cryptoKit
+	}
+	
+	private static func isSecureEnclaveAvailable() -> Bool {
+		// Secure Enclave requires both hardware support and non-jailbroken device
+		let query: [String: Any] = [
+			kSecClass as String: kSecClassKey,
+			kSecAttrKeyType as String: kSecAttrKeyTypeECSECPrimeRandom,
+			kSecAttrTokenID as String: kSecAttrTokenIDSecureEnclave
+		]
+		
+		var item: CFTypeRef?
+		let status = SecItemCopyMatching(query as CFDictionary, &item)
+		
+		// If we can query Secure Enclave, it's available
+		return status == errSecItemNotFound || status == errSecSuccess
+	}
+	
+	private static func hasHardwareAESAcceleration() -> Bool {
+		// ARM64 devices have hardware AES instructions (AESE/AESD)
+		#if arch(arm64)
+		return true
+		#else
+		return false
+		#endif
+	}
+	
+	// MARK: - Core Encryption (Existing)
+	
 	static func encryptData(_ data: Data, using key: SymmetricKey) throws -> Data {
 		let sealedBox = try ChaChaPoly.seal(data, using: key)
 		return sealedBox.combined
@@ -26,43 +75,139 @@ class VaultCrypto {
 	}
 	
 	static func hashPIN(_ pin: String) -> SecurePINHash {
-			let digest = SHA256.hash(data: Data(pin.utf8))
-			let hashString = digest.compactMap { String(format: "%02x", $0) }.joined()
-			return SecurePINHash(
-				hash: Data(hashString.utf8),
-				salt: Data(),
-				algorithm: .sha256,
-				iterations: 1
-			)
-
-// Advanced Encryption
-
-extension VaultCrypto {
-  
-  /// Multi-layer encryption with key rotation support
-  static func encryptWithKeyRotation(_ data: Data, using keys: [SymmetricKey]) throws -> Data {
-	  var encryptedData = data
-	  
-	  for key in keys {
-		  encryptedData = try encryptData(encryptedData, using: key)
-	  }
-	  
-	  return encryptedData
-  }
-  
-  /// Secure key derivation with device binding
-  static func deriveDeviceBoundKey(from password: String, deviceID: String) throws -> SymmetricKey {
-	  let combinedInput = password + deviceID + "NuDefndr_Salt_2025"
-	  let inputData = Data(combinedInput.utf8)
-	  let hash = SHA256.hash(data: inputData)
-	  return SymmetricKey(data: Data(hash))
-  }
-  
-  /// Encryption strength validation
-  static func validateEncryptionStrength(_ key: SymmetricKey) -> EncryptionStrength {
-	  // Analyze key entropy and return strength level
-	  return .military // logic
-  }
+		let digest = SHA256.hash(data: Data(pin.utf8))
+		let hashString = digest.compactMap { String(format: "%02x", $0) }.joined()
+		return SecurePINHash(
+			hash: Data(hashString.utf8),
+			salt: Data(),
+			algorithm: .sha256,
+			iterations: 1
+		)
+	}
+	
+	// MARK: - Key Rotation & Forward Secrecy
+	
+	struct KeyRotationMetadata: Codable {
+		let version: Int
+		let creationDate: Date
+		let rotationDate: Date?
+		let keyDerivationRounds: UInt32
+	}
+	
+	/// Derives a new key from an existing key using HKDF (NIST SP 800-56C)
+	static func rotateKey(from oldKey: SymmetricKey, context: String) throws -> (newKey: SymmetricKey, metadata: KeyRotationMetadata) {
+		let salt = SymmetricKey(size: .bits256) // Random salt
+		let info = Data(context.utf8)
+		
+		// Use HKDF for key derivation
+		let derivedKey = HKDF<SHA256>.deriveKey(
+			inputKeyMaterial: oldKey,
+			salt: salt,
+			info: info,
+			outputByteCount: 32
+		)
+		
+		let metadata = KeyRotationMetadata(
+			version: 2,
+			creationDate: Date(),
+			rotationDate: Date(),
+			keyDerivationRounds: 1
+		)
+		
+		return (derivedKey, metadata)
+	}
+	
+	/// Re-encrypts data with a new key (for key rotation)
+	static func reencryptData(_ encryptedData: Data, from oldKey: SymmetricKey, to newKey: SymmetricKey) throws -> Data {
+		// Decrypt with old key
+		let plaintext = try decryptData(encryptedData, using: oldKey)
+		
+		// Re-encrypt with new key
+		return try encryptData(plaintext, using: newKey)
+	}
+	
+	// MARK: - Enhanced Key Derivation (PBKDF2)
+	
+	/// Derives a key from password using PBKDF2 (stronger than simple hashing)
+	static func deriveKeyFromPassword(_ password: String, salt: Data, rounds: UInt32 = 100_000) throws -> SymmetricKey {
+		guard let passwordData = password.data(using: .utf8) else {
+			throw CryptoError.keyDerivationFailed
+		}
+		
+		var derivedKeyData = Data(count: 32)
+		let status = derivedKeyData.withUnsafeMutableBytes { derivedKeyBytes in
+			salt.withUnsafeBytes { saltBytes in
+				CCKeyDerivationPBKDF(
+					CCPBKDFAlgorithm(kCCPBKDF2),
+					password,
+					passwordData.count,
+					saltBytes.baseAddress?.assumingMemoryBound(to: UInt8.self),
+					salt.count,
+					CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
+					rounds,
+					derivedKeyBytes.baseAddress?.assumingMemoryBound(to: UInt8.self),
+					32
+				)
+			}
+		}
+		
+		guard status == kCCSuccess else {
+			throw CryptoError.keyDerivationFailed
+		}
+		
+		return SymmetricKey(data: derivedKeyData)
+	}
+	
+	// MARK: - Encryption Strength Validation
+	
+	struct KeyStrengthReport {
+		let entropy: Double
+		let keySize: Int
+		let algorithm: String
+		let rating: EncryptionStrength
+	}
+	
+	/// Analyzes key entropy and strength
+	static func analyzeKeyStrength(_ key: SymmetricKey) -> KeyStrengthReport {
+		let keyData = key.withUnsafeBytes { Data($0) }
+		let entropy = calculateEntropy(keyData)
+		let keySize = keyData.count * 8 // bits
+		
+		let rating: EncryptionStrength
+		if keySize >= 256 && entropy > 7.5 {
+			rating = .military
+		} else if keySize >= 256 {
+			rating = .enhanced
+		} else {
+			rating = .standard
+		}
+		
+		return KeyStrengthReport(
+			entropy: entropy,
+			keySize: keySize,
+			algorithm: "ChaCha20-Poly1305",
+			rating: rating
+		)
+	}
+	
+	/// Calculates Shannon entropy of data
+	private static func calculateEntropy(_ data: Data) -> Double {
+		var frequency = [UInt8: Int]()
+		
+		for byte in data {
+			frequency[byte, default: 0] += 1
+		}
+		
+		let length = Double(data.count)
+		var entropy: Double = 0.0
+		
+		for count in frequency.values {
+			let probability = Double(count) / length
+			entropy -= probability * log2(probability)
+		}
+		
+		return entropy
+	}
 }
 
 enum EncryptionStrength: String, CaseIterable {
@@ -132,4 +277,3 @@ enum CryptoError: LocalizedError {
 		}
 	}
 }
-
