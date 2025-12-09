@@ -8,126 +8,89 @@
 # NuDefndr — Core Privacy Components
 
 NuDefndr is an **on-device sensitive content detection system** for iOS.  
-It uses **Apple’s Secure Sensitive Content Analysis** frameworks to detect NSFW, nude, and explicit images entirely **locally**—never leaving the device.
+It leverages **Apple’s Secure Sensitive Content Analysis** frameworks to detect NSFW, nude, and explicit images entirely **locally**, ensuring no data ever leaves the device.
 
-This repository contains **auditable** privacy-and-security modules extracted from the production NuDefndr app.
+This repository provides **auditable privacy and security modules** extracted from the production NuDefndr app.
 
-🔗 **Website:** https://nudefndr.com  
+🔗 **Website:** [nudefndr.com](https://nudefndr.com)  
 🔐 **Developer:** Dro1d Labs
 
 ---
 
 ## 🔒 Privacy Guarantees (Verifiable)
 
-NuDefndr is designed with a strict, inspectable privacy model:
+NuDefndr enforces a strict, inspectable privacy model:
 
-- **Zero Network Transmission**  
-  No analytics, no logging, *no* outbound connections. No network code exists in the analysis pipeline.
-
-- **100% On-Device Detection**  
-  Powered by Apple’s SensitiveContentAnalysis framework (iOS 17+ / 18+ / iOS26).
-
-- **Hardware-Backed Encryption**  
-  Vault data uses AES-256 / ChaCha20-Poly1305 with Secure Enclave–derived keys.
-
-- **Panic Mode Architecture**  
-  Dual-vault system providing emergency concealment and rapid obfuscation.
+- **Zero Network Transmission** – No analytics, logging, or outbound connections exist in the analysis pipeline.  
+- **100% On-Device Detection** – Powered by Apple’s SensitiveContentAnalysis framework (iOS 17+/18+/iOS26).  
+- **Hardware-Backed Encryption** – Vault data is encrypted using AES-256 / ChaCha20-Poly1305 with Secure Enclave–derived keys.  
+- **Panic Mode Architecture** – Dual-vault system enables emergency concealment and rapid obfuscation.
 
 ---
 
 ## 🧠 Included Components
 
 ### 🔍 Core Analysis Engine
-- `SensitiveContentService.swift`  
-  – Wrapper for Apple’s SensitiveContentAnalysis framework  
-  – Runs synchronous and batched scans  
-  – Respects sandbox + memory constraints
-
-- `ScanRangeOption.swift`  
-  – Immutable definitions for scanning “All Photos”, “Recent Photos”, or specific date windows
+- `SensitiveContentService.swift` – Wrapper for Apple’s SensitiveContentAnalysis framework; supports synchronous and batched scans.  
+- `ScanRangeOption.swift` – Immutable definitions for scanning all photos, recent photos, or custom date windows.
 
 ### 🔐 Security & Encryption
-- `VaultCrypto.swift`  
-  – AES-256 / ChaCha20-Poly1305 hybrid crypto  
-  – Built for low-latency iOS file vault operations
-
-- `KeychainSecure.swift`  
-  – Hardware-bound key derivation  
-  – Secure Enclave + biometric enforcement  
-  – Rotation-safe key lifecycle
-
-- `PanicModeCore.swift`  
-  – Dual vault system (Primary + Decoy)  
-  – Emergency zeroization & redirection  
-  – Non-forensic decoy behaviour
+- `VaultCrypto.swift` – Hybrid AES-256 / ChaCha20-Poly1305 crypto for fast, secure iOS vault operations.  
+- `KeychainSecure.swift` – Secure Enclave–bound key derivation with biometric enforcement and rotation-safe lifecycle.  
+- `PanicModeCore.swift` – Dual-vault system with emergency zeroization and non-forensic decoy behavior.
 
 ### 🚨 App Integrity & Hardening
-- `JailbreakDetection.swift`  
-  – High-signal jailbreak heuristics  
-  – FS probe, sandbox anomaly detection  
-  – No private APIs
-
-- `AntiTampering.swift`  
-  – Binary integrity checks  
-  – Code signature validation  
-  – App environment sanity checks
+- `JailbreakDetection.swift` – High-signal heuristics (FS probes, sandbox anomaly detection) without using private APIs.  
+- `AntiTampering.swift` – Binary integrity checks and code signature validation; runtime environment sanity verification.
 
 ### 🔏 Auditable Logging / Validation
-- `SecureLogging.swift`  
-  – Ephemeral in-memory logging  
-  – No disk persistence  
-  – Redacted event structures
-
-- `CryptoValidation.swift`  
-  – Known-answer tests (KATs)  
-  – Integrity + regression validation for crypto ops
+- `SecureLogging.swift` – Ephemeral in-memory logging with redacted event structures; no disk persistence.  
+- `CryptoValidation.swift` – Known-answer tests (KATs) for cryptography integrity and regression validation.
 
 ---
 
 ## 🧱 Architectural Documentation
 
-NuDefndr contains detailed in-repo security documentation:
+The repository contains detailed security documentation for verification purposes:
 
-- `SECURITY.md` — Security policies & cryptographic commitments  
-- `PERFORMANCE.md` — Performance architecture, throughput profiles  
-- `THREAT_MODEL.md` — Complete threat surface: device, OS, user, attacker classes  
-- `SecurityArchitecture.md` — High-level vault + encryption flow diagrams  
+- `SECURITY.md` — Security policies & cryptographic commitments.  
+- `PERFORMANCE.md` — Performance architecture and throughput profiles.  
+- `THREAT_MODEL.md` — Threat surface analysis: device, OS, user, attacker models.  
+- `SecurityArchitecture.md` — High-level vault + encryption flow diagrams.  
 
-These documents allow third-party engineers and security researchers to **verify NuDefndr’s privacy claims** without exposing any proprietary app logic.
+These allow engineers and security researchers to **verify privacy and security claims** without exposing proprietary app logic.
 
 ---
 
 ## 🛡 Security Architecture Overview
 
 ### 🔐 Vault Encryption
-- AES-256 + ChaCha20-Poly1305  
-- Randomized nonces  
+- AES-256 + ChaCha20-Poly1305 with randomized nonces  
 - Per-install unique keys derived from Secure Enclave  
-- No plaintext ever written to disk
+- No plaintext is ever written to disk
 
 ### 🔏 Panic Mode
 - Decoupled decoy vault  
 - Emergency PIN triggers vault switch  
-- Designed to withstand casual inspection, not forensic extraction
+- Designed to withstand casual inspection; not intended for forensic extraction
 
 ### 🔑 Key Management
-- Device-bound  
-- Biometric-protected  
+- Device-bound, biometric-protected  
 - Secure Enclave lifecycle with automatic invalidation on device changes
 
 ---
 
 ## 🧪 Independent Verification
 
-Security researchers and auditors can confirm:
+Auditors can confirm:
 
-- **No network requests exist in the analysis or vault subsystem**  
-- **Image data is never uploaded, cached externally, or transmitted**  
-- **Vault data cannot be decrypted without the Secure Enclave key**  
-- **Panic Mode cannot reveal primary vault contents**  
-- **Tampering attempts are detectable at runtime**
+- No network requests exist in analysis or vault subsystems  
+- Image data is never uploaded or cached externally  
+- Vault data is inaccessible without the Secure Enclave key  
+- Panic Mode prevents exposure of primary vault contents  
+- Tampering attempts are detectable at runtime
 
-This repo intentionally allows **external verification without exposing proprietary logic** from the full NuDefndr app.
+This repository allows **external verification without revealing proprietary logic** from the full NuDefndr app.
 
 ---
 
@@ -140,6 +103,6 @@ Released under the MIT License. See `LICENSE` for details.
 ## ⚠️ Disclaimer
 
 This repository exposes **core architectural components** for transparency, education, and privacy verification.  
-It is **not** the full production NuDefndr app and cannot be compiled into a standalone build.
+It is **not a complete production NuDefndr app** and cannot be compiled into a standalone build.  
 
 Dro1d Labs retains all rights to the NuDefndr app and its proprietary assets.
