@@ -25,7 +25,7 @@ NuDefndr is designed with a strict, inspectable privacy model:
   No analytics, no logging, *no* outbound connections. No network code exists in the analysis pipeline.
 
 - **100% On-Device Detection**  
-  Powered by Apple’s SensitiveContentAnalysis framework (iOS 17+ / 18+).
+  Powered by Apple’s SensitiveContentAnalysis framework (iOS 17+ / 18+ / iOS26).
 
 - **Hardware-Backed Encryption**  
   Vault data uses AES-256 / ChaCha20-Poly1305 with Secure Enclave–derived keys.
