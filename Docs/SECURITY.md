@@ -94,6 +94,6 @@ _No security disclosures have been submitted yet._
 ---
 
 **Last Updated:** December 2025  
-**Version:** 2.0  
+**Version:** 2.1.1
 **Contact:** dev@nudefndr.com  
 Website: https://nudefndr.com
