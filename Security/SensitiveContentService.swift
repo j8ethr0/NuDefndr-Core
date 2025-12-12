@@ -1,157 +1,194 @@
 // Copyright (c) 2025 Dro1d Labs Limited
 // Released under the MIT License. See LICENSE file for details.
 //
-// NuDefndr App - Core Privacy Component
+// NuDefndr App - Sensitive Content Analysis Service
 // App Website: https://nudefndr.com
-// Developer: Dro1d Labs Security Engineering Team
-//
-// Privacy Guarantee:
-// This service performs analysis entirely on-device using Apple’s
-// SensitiveContentAnalysis framework. No image data or results ever leave
-// the user’s device.
+// Developer: Dro1d Labs
 
 import Foundation
-import SensitiveContentAnalysis
 import UIKit
-import CoreGraphics
-import SwiftUI
-import os.log
+import SensitiveContentAnalysis
 
-final class SensitiveContentService {
-
-	private let analyzer = SCSensitivityAnalyzer()
-	private let logger = Logger(subsystem: "com.nudefndr.core", category: "ContentAnalysis")
-	private let performanceMonitor = PerformanceMonitor.shared
-
-	// MARK: - Single Image Analysis
-
-	func analyzeImage(imageData: Data, assetIdentifier: String) async -> Bool {
-		await performanceMonitor.checkThermalState()
-
-		guard let uiImage = UIImage(data: imageData),
-			  let cgImage = uiImage.cgImage else {
-			SecureLogger.warning("Failed to decode image for analysis", category: "SensitiveContent")
-			return false
-		}
-
-		do {
-			let start = Date()
-			let result = try await analyzer.analyzeImage(cgImage)
-			let duration = Date().timeIntervalSince(start)
-
-			performanceMonitor.recordAnalysis(duration: duration)
-
-			return result.isSensitive
-		} catch {
-			SecureLogger.error("Image analysis failed: \(error.localizedDescription)", category: "SensitiveContent")
-			return false
-		}
-	}
-
-	// MARK: - URL Based Analysis
-
-	func analyzeImage(at imageURL: URL) async -> Bool {
-		var accessGranted = false
-
-		if imageURL.isFileURL {
-			accessGranted = imageURL.startAccessingSecurityScopedResource()
-			if !accessGranted {
-				SecureLogger.warning("SecurityScopedResource access denied", category: "SensitiveContent")
-			}
-		}
-
-		defer {
-			if accessGranted { imageURL.stopAccessingSecurityScopedResource() }
-		}
-
-		do {
-			let data = try Data(contentsOf: imageURL)
-			return await analyzeImage(imageData: data, assetIdentifier: imageURL.absoluteString)
-		} catch {
-			SecureLogger.error("Failed to load image data: \(error.localizedDescription)",
-							   category: "SensitiveContent")
-			return false
-		}
-	}
-
-	// MARK: - Thermal-Aware Batch Analysis
-
-	func analyzeBatchWithThermalAwareness(
-		_ urls: [URL],
-		progressCallback: @escaping (Double) -> Void
-	) async -> [URL: Bool] {
-
-		var results: [URL: Bool] = [:]
-		let batchSize = performanceMonitor.adaptiveBatchSize()
-
-		for (index, url) in urls.enumerated() {
-
-			if index % batchSize == 0 {
-				await performanceMonitor.checkThermalState()
-
-				if performanceMonitor.isThermalCritical {
-					SecureLogger.warning("Thermal critical reached — throttling batch analysis",
-										 category: "Thermal")
-					await Task.sleep(nanoseconds: 300_000_000)
-				}
-			}
-
-			let result = await analyzeImage(at: url)
-			results[url] = result
-
-			await MainActor.run {
-				progressCallback(Double(index + 1) / Double(urls.count))
-			}
-
-			if performanceMonitor.isMemoryPressureHigh() {
-				await Task.sleep(nanoseconds: 100_000_000)
-			}
-		}
-
-		return results
-	}
+/// Wrapper for Apple's SensitiveContentAnalysis framework
+/// Production app includes additional proprietary ML classification layers
+@available(iOS 17.0, *)
+public class SensitiveContentService {
+    
+    // MARK: - Singleton
+    
+    public static let shared = SensitiveContentService()
+    
+    private init() {
+        checkFrameworkAvailability()
+    }
+    
+    // MARK: - Framework Availability
+    
+    private func checkFrameworkAvailability() {
+        #if DEBUG
+        print("[SensitiveContent] Framework available: iOS 17+")
+        print("[SensitiveContent] Using Apple SensitiveContentAnalysis")
+        #endif
+    }
+    
+    // MARK: - Analysis Interface
+    
+    public enum AnalysisResult {
+        case sensitive(confidence: Double)
+        case safe
+        case unavailable
+        case error(Error)
+    }
+    
+    /// Analyzes a single image for sensitive content
+    /// - Parameter image: UIImage to analyze
+    /// - Returns: Analysis result with confidence score
+    public func analyze(_ image: UIImage) async -> AnalysisResult {
+        // Note: This is the public API interface
+        // Production app includes proprietary multi-stage analysis:
+        // 1. Apple SensitiveContentAnalysis (base detection)
+        // 2. Custom ML model (enhanced accuracy)
+        // 3. Context-aware filtering (false positive reduction)
+        // 4. Adaptive thresholds (user preference tuning)
+        
+        guard let analyzer = createAnalyzer() else {
+            return .unavailable
+        }
+        
+        do {
+            let result = try await performAnalysis(image: image, analyzer: analyzer)
+            return result
+        } catch {
+            return .error(error)
+        }
+    }
+    
+    /// Batch analysis for multiple images
+    /// - Parameter images: Array of UIImages to analyze
+    /// - Returns: Array of analysis results
+    public func analyzeBatch(_ images: [UIImage]) async -> [AnalysisResult] {
+        // Production implementation uses concurrent processing
+        // with adaptive batch sizing based on device capabilities
+        
+        var results: [AnalysisResult] = []
+        
+        for image in images {
+            let result = await analyze(image)
+            results.append(result)
+        }
+        
+        return results
+    }
+    
+    // MARK: - Private Implementation
+    
+    private func createAnalyzer() -> SCSensitivityAnalyzer? {
+        // Production: Additional configuration and optimization
+        return SCSensitivityAnalyzer()
+    }
+    
+    private func performAnalysis(image: UIImage, analyzer: SCSensitivityAnalyzer) async throws -> AnalysisResult {
+        // Simplified implementation for audit purposes
+        // Production includes:
+        // - Pre-processing optimization
+        // - Multi-model ensemble
+        // - Confidence calibration
+        // - Result caching
+        
+        let analysis = try await analyzer.analyzeImage(image)
+        
+        if analysis.isSensitive {
+            return .sensitive(confidence: 1.0)
+        } else {
+            return .safe
+        }
+    }
+    
+    // MARK: - Performance Monitoring
+    
+    public struct PerformanceMetrics {
+        let analysisTime: TimeInterval
+        let imageSize: CGSize
+        let memoryUsed: UInt64
+    }
+    
+    public func analyzeWithMetrics(_ image: UIImage) async -> (result: AnalysisResult, metrics: PerformanceMetrics) {
+        let startTime = Date()
+        let startMemory = getMemoryUsage()
+        
+        let result = await analyze(image)
+        
+        let metrics = PerformanceMetrics(
+            analysisTime: Date().timeIntervalSince(startTime),
+            imageSize: image.size,
+            memoryUsed: getMemoryUsage() - startMemory
+        )
+        
+        return (result, metrics)
+    }
+    
+    private func getMemoryUsage() -> UInt64 {
+        var info = mach_task_basic_info()
+        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
+        
+        let kerr: kern_return_t = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
+                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+            }
+        }
+        
+        return kerr == KERN_SUCCESS ? info.resident_size : 0
+    }
 }
 
-// MARK: - Extensions
+// MARK: - Analysis Configuration
 
-extension SensitiveContentService {
-
-	func analyzeBatch(
-		_ urls: [URL],
-		progressCallback: @escaping (Double) -> Void
-	) async -> [URL: Bool] {
-
-		var results: [URL: Bool] = [:]
-
-		for (index, url) in urls.enumerated() {
-			results[url] = await analyzeImage(at: url)
-
-			await MainActor.run {
-				progressCallback(Double(index + 1) / Double(urls.count))
-			}
-		}
-
-		return results
-	}
-
-	func analyzeWithMemoryOptimization(
-		imageData: Data,
-		maxSize: CGSize = CGSize(width: 2048, height: 2048)
-	) async -> Bool {
-
-		// Future enhancement: downscale before processing
-		return await analyzeImage(imageData: imageData, assetIdentifier: "memory_optimized")
-	}
+@available(iOS 17.0, *)
+public extension SensitiveContentService {
+    
+    struct AnalysisConfiguration {
+        let sensitivityThreshold: Double
+        let enableCaching: Bool
+        let maxConcurrentAnalyses: Int
+        
+        public static let `default` = AnalysisConfiguration(
+            sensitivityThreshold: 0.5,
+            enableCaching: true,
+            maxConcurrentAnalyses: 3
+        )
+        
+        public static let strict = AnalysisConfiguration(
+            sensitivityThreshold: 0.3,
+            enableCaching: true,
+            maxConcurrentAnalyses: 3
+        )
+        
+        public static let relaxed = AnalysisConfiguration(
+            sensitivityThreshold: 0.7,
+            enableCaching: true,
+            maxConcurrentAnalyses: 3
+        )
+    }
 }
 
-final class AnalysisStatsCollector: ObservableObject {
-	@Published var totalAnalyzed = 0
-	@Published var averageAnalysisTime: TimeInterval = 0
-	@Published var memoryUsage: Int = 0
+// MARK: - Error Types
 
-	func recordAnalysis(duration: TimeInterval) {
-		totalAnalyzed += 1
-		averageAnalysisTime =
-			(averageAnalysisTime * Double(totalAnalyzed - 1) + duration) / Double(totalAnalyzed)
-	}
+public enum SensitiveContentError: LocalizedError {
+    case frameworkUnavailable
+    case analysisTimeout
+    case imageProcessingFailed
+    case insufficientPermissions
+    
+    public var errorDescription: String? {
+        switch self {
+        case .frameworkUnavailable:
+            return "SensitiveContentAnalysis framework not available (iOS 17+ required)"
+        case .analysisTimeout:
+            return "Analysis timed out"
+        case .imageProcessingFailed:
+            return "Failed to process image"
+        case .insufficientPermissions:
+            return "Insufficient permissions to analyze content"
+        }
+    }
 }

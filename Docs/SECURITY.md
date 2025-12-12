@@ -4,10 +4,10 @@
 
 | Version | Supported |
 |--------|-----------|
+| 2.1.x  | ✔️         |
 | 2.0.x  | ✔️         |
-| 1.7.x  | ✔️         |
-| 1.6.x  | ❌         |
-| < 1.6  | ❌         |
+| 1.7.x  | ⚠️ Limited |
+| < 1.7  | ❌         |
 
 ## Security Architecture
 
@@ -81,19 +81,25 @@ _No security disclosures have been submitted yet._
 
 ## Security Update Log
 
-### 2.0 — December 2025
+### 2.1.2 — December 2025
+- Enhanced vault organization with smart filtering
+- Advanced Redaction Toolkit (Blur, Pixelate, Black Box)
+- Stealth Theme implementation
+- Device-aware concurrency optimizations
+
+### 2.0 — November 2025
 - Improved background-task stability
 - Unified scan result pipeline
 - Better timestamp handling for incremental scans
 
-### 1.7.0 — November 2025
+### 1.7.0 — October 2025
 - Unified scanning architecture
 - Reduced race conditions in scan completion
 - Improved timestamp migration reliability
 
 ---
 
-**Last Updated:** December 2025  
-**Version:** 2.1.1
-**Contact:** dev@nudefndr.com  
+**Last Updated:** December 12, 2025  
+**Version:** 2.1.2
+**Contact:** security@nudefndr.com  
 Website: https://nudefndr.com

@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔐 Security Vulnerability (Private)
+    url: mailto:security@nudefndr.com
+    about: Report security vulnerabilities privately via email
+  - name: 💬 General Support
+    url: mailto:support@nudefndr.com
+    about: Get help with the NuDefndr app
+  - name: 🌐 Website
+    url: https://nudefndr.com
+    about: Visit the official NuDefndr website
+  - name: 📱 Download App
+    url: https://apps.apple.com/app/nudefndr
+    about: Download NuDefndr from the App Store
