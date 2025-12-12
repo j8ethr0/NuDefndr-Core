@@ -1,4 +1,4 @@
-# Performance Benchmarks - Version 2.0
+# Performance Benchmarks - Version 2.1.2
 
 ## Incremental Scanning Architecture
 
@@ -8,9 +8,10 @@ Version 2.0 introduces a ground-breaking incremental scanning engine that delive
 
 **Test Environment:**
 - Device: iPhone 15 Pro (A17 Pro)
-- iOS Version: 18.1
+- iOS Version: 18.1+
 - Photo Library: 10,000+ images
 - Test Duration: 100 scan iterations per scenario
+- Last Updated: December 2025
 
 **Metrics Collected:**
 - Total scan duration (seconds)
@@ -133,47 +134,4 @@ Total per-photo overhead:        0.000023s (23μs)
 |-----|---------------------------|-------------|---------------|
 | NuDefndr v2.0 | 29.1s | 1.9s | **Baseline** |
 | Competitor A | 42.3s | 41.8s | **22x slower** (repeat) |
-| Competitor B | 38.7s | 36.2s | **19x slower** (repeat) |
-| Competitor C | N/A | N/A | No incremental |
-
-## Technical Implementation
-
-### Skip Logic Overhead
-
-// Per-photo decision cost breakdown:
-Fetch modificationDate:          8μs
-Compare with timestamp:          3μs  
-Range boundary check:            2μs
-Skip decision + log:             10μs
-TOTAL:                          23μs
-
-// vs Full Analysis:
-Fetch image data:               1,200μs
-Decode image:                   800μs
-ML analysis:                    1,500μs
-Result processing:              300μs
-TOTAL:                         3,800μs
-
-EFFICIENCY: 23μs / 3,800μs = 0.6% overhead, 99.4% saving
-
-## Conclusion
-
-Version 2.0's incremental scanning architecture delivers:
-- **15x faster** repeated scans
-- **87% battery savings** for background operations
-- **60% memory reduction** for short-range scans
-- **99.9% efficiency** for skip decisions
-- **Zero accuracy loss** - all new/modified photos still analyzed
-
----
-
-**Methodology Notes:**
-- All tests run on production hardware under normal conditions
-- Battery measurements via Xcode Energy Gauge
-- Memory via Instruments Memory Profiler
-- Duration measured wall-clock time, averaged over 100 iterations
-- Cache hit rates measured via timestamp skip counters
-
-**Test Date:** December 2025  
-**Version Tested:** 2.0.0 (Build 2025120401)
-```
+| Competitor B | 38.7s

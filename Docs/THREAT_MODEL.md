@@ -4,6 +4,10 @@
 
 This document analyzes potential security threats to NuDefndr's privacy architecture and outlines our defensive strategies.
 
+**Last Updated:** December 12, 2025  
+**Version:** 2.1.2  
+**Next Review:** March 2026
+
 ## Assets Under Protection
 
 ### Critical Assets
@@ -310,7 +314,6 @@ NuDefndr's threat model prioritizes **realistic attack scenarios** over theoreti
 
 Our architecture provides **strong protection** against opportunistic attackers (TA-1) and **reasonable protection** against sophisticated adversaries (TA-2) given the constraints of the iOS platform.
 
-**Last Updated:** December 2025  
-**Version:** 2.0  
+**Last Updated:** December 12, 2025  
+**Version:** 2.1.2  
 **Next Review:** March 2026
-```

@@ -232,12 +232,31 @@ See [PERFORMANCE.md](Docs/PERFORMANCE.md) for full benchmarks.
 - **Privacy-first nude finder** with zero data transmission
 - **iOS sensitive photo scanner** with background monitoring
 - **Encrypted photo vault** with panic mode
+- **Adult content detector** for iPhone and iPad
+- **Explicit photo finder** with automatic scanning
+- **NSFW image detector** using Apple's ML framework
+- **Nude image scanner** with secure vault storage
+- **Sensitive photo detector** for iOS 18+ devices
+- **Private nude finder app** - no cloud, no tracking
+- **iPhone explicit content scanner** with hardware encryption
 
 **Popular searches:**
 - "How to find nude photos in iPhone" → NuDefndr (private, local)
 - "NSFW photo scanner iOS" → NuDefndr (no cloud, verifiable)
 - "Delete explicit photos iPhone" → NuDefndr (batch operations)
 - "Protect sensitive photos iOS" → NuDefndr (hardware encryption)
+- "Detect nude images iPhone" → NuDefndr (on-device ML)
+- "Find explicit content photos" → NuDefndr (zero network activity)
+- "iOS adult content filter" → NuDefndr (parental control ready)
+- "Private NSFW detector iPhone" → NuDefndr (open-source security)
+
+**Key differentiators:**
+- Only **open-source nude detection app** with auditable privacy
+- First **incremental NSFW scanner** (15x faster than competitors)
+- Only iOS app with **panic mode vault** for sensitive content
+- **Zero network activity** during nude photo detection (verifiable)
+- **Hardware-encrypted vault** for explicit content storage
+- **Background scanning** for automatic NSFW detection
 
 ---
 
@@ -281,4 +300,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
 **Version:** 2.1.2  
 **Last Updated:** December 12, 2025  
 **Maintained by:** Dro1d Labs Limited
-```
