@@ -10,9 +10,10 @@
 
 import Foundation
 import os.log
+import UIKit
 
 /// Privacy-preserving logging system with automatic PII redaction
-class SecureLogger {
+final class SecureLogger {
 	
 	// MARK: - Log Levels
 	
@@ -24,155 +25,145 @@ class SecureLogger {
 		case critical = 4
 		
 		static func < (lhs: LogLevel, rhs: LogLevel) -> Bool {
-			return lhs.rawValue < rhs.rawValue
+			lhs.rawValue < rhs.rawValue
 		}
 		
 		var osLogType: OSLogType {
 			switch self {
-			case .debug: return .debug
-			case .info: return .info
-			case .warning: return .default
-			case .error: return .error
+			case .debug:    return .debug
+			case .info:     return .info
+			case .warning:  return .default
+			case .error:    return .error
 			case .critical: return .fault
 			}
 		}
 		
 		var emoji: String {
 			switch self {
-			case .debug: return "🔍"
-			case .info: return "ℹ️"
-			case .warning: return "⚠️"
-			case .error: return "❌"
+			case .debug:    return "🔍"
+			case .info:     return "ℹ️"
+			case .warning:  return "⚠️"
+			case .error:    return "❌"
 			case .critical: return "🚨"
 			}
 		}
 	}
 	
-	// NOTE: OSLog automatically rate-limits excessive logging.
-	// Excessive debug logs will not degrade performance.
-	
 	// MARK: - Configuration
 	
 	private static var minimumLogLevel: LogLevel = .info
 	private static let subsystem = "com.nudefndr.core.security"
-	private static let logger = Logger(subsystem: subsystem, category: "Security")
 	
-	// MARK: - Public Logging Interface
+	// MARK: - Logging
 	
-	/// Logs a message with automatic PII redaction
-	static func log(_ level: LogLevel, category: String, _ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+	static func log(
+		_ level: LogLevel,
+		category: String,
+		_ message: String,
+		file: String = #file,
+		function: String = #function,
+		line: Int = #line
+	) {
 		guard level >= minimumLogLevel else { return }
 		
-		let redactedMessage = redactSensitiveData(message)
-		let formattedMessage = formatLogMessage(level, category: category, message: redactedMessage, file: file, function: function, line: line)
+		let redacted = redactSensitiveData(message)
+		let formatted = formatLogMessage(level, category: category, message: redacted,
+										 file: file, function: function, line: line)
 		
-		// Write to os_log
-		os_log("%{public}@", log: OSLog(subsystem: subsystem, category: category), type: level.osLogType, formattedMessage)
+		os_log("%{public}@", log: .init(subsystem: subsystem, category: category),
+			   type: level.osLogType, formatted)
 		
-		// Write to in-memory buffer for diagnostics
-		appendToBuffer(formattedMessage)
+		appendToBuffer(formatted)
 	}
 	
-	// MARK: - Convenience Methods
+	// MARK: - Convenience
 	
-	static func debug(_ message: String, category: String = "General", file: String = #file, function: String = #function, line: Int = #line) {
-		log(.debug, category: category, message, file: file, function: function, line: line)
-	}
+	static func debug(_ msg: String, category: String = "General") { log(.debug, category: category, msg) }
+	static func info(_ msg: String, category: String = "General") { log(.info, category: category, msg) }
+	static func warning(_ msg: String, category: String = "General") { log(.warning, category: category, msg) }
+	static func error(_ msg: String, category: String = "General") { log(.error, category: category, msg) }
+	static func critical(_ msg: String, category: String = "General") { log(.critical, category: category, msg) }
 	
-	static func info(_ message: String, category: String = "General", file: String = #file, function: String = #function, line: Int = #line) {
-		log(.info, category: category, message, file: file, function: function, line: line)
-	}
-	
-	static func warning(_ message: String, category: String = "General", file: String = #file, function: String = #function, line: Int = #line) {
-		log(.warning, category: category, message, file: file, function: function, line: line)
-	}
-	
-	static func error(_ message: String, category: String = "General", file: String = #file, function: String = #function, line: Int = #line) {
-		log(.error, category: category, message, file: file, function: function, line: line)
-	}
-	
-	static func critical(_ message: String, category: String = "General", file: String = #file, function: String = #function, line: Int = #line) {
-		log(.critical, category: category, message, file: file, function: function, line: line)
-	}
-	
-	// MARK: - PII Redaction
+	// MARK: - Redaction
 	
 	private static func redactSensitiveData(_ message: String) -> String {
 		var redacted = message
 		
-		// Redact asset IDs (PHAsset identifiers)
-		redacted = redactPattern(redacted, pattern: "[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}/L0/\\d{3}", replacement: "[ASSET_ID]")
+		// PHAsset identifiers (broader)
+		redacted = redactPattern(redacted, pattern: "[A-F0-9\\-]{20,}", replacement: "[ASSET_ID]")
 		
-		// Redact file paths
+		// File paths
 		redacted = redactPattern(redacted, pattern: "/Users/[^/]+/", replacement: "/Users/[REDACTED]/")
-		redacted = redactPattern(redacted, pattern: "/private/var/mobile/", replacement: "/private/var/mobile/[REDACTED]/")
+		redacted = redactPattern(redacted, pattern: "/private/var/mobile/[^/]+/", replacement: "/private/var/mobile/[REDACTED]/")
 		
-		// Redact email addresses
-		redacted = redactPattern(redacted, pattern: "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}", replacement: "[EMAIL]")
+		// Email
+		redacted = redactPattern(redacted, pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", replacement: "[EMAIL]", options: .caseInsensitive)
 		
-		// Redact phone numbers
-		redacted = redactPattern(redacted, pattern: "\\+?[1-9]\\d{1,14}", replacement: "[PHONE]")
+		// Phone
+		redacted = redactPattern(redacted, pattern: "\\+?[1-9]\\d{8,14}", replacement: "[PHONE]")
 		
-		// Redact encryption keys (hex strings > 32 chars)
-		redacted = redactPattern(redacted, pattern: "[a-fA-F0-9]{32,}", replacement: "[KEY]")
+		// Keys
+		redacted = redactPattern(redacted, pattern: "[A-Fa-f0-9]{32,}", replacement: "[KEY]")
 		
-		// Redact IP addresses
+		// IP
 		redacted = redactPattern(redacted, pattern: "\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b", replacement: "[IP_ADDRESS]")
 		
 		return redacted
 	}
 	
-	private static func redactPattern(_ input: String, pattern: String, replacement: String) -> String {
-		guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+	private static func redactPattern(
+		_ input: String,
+		pattern: String,
+		replacement: String,
+		options: NSRegularExpression.Options = []
+	) -> String {
+		guard let regex = try? NSRegularExpression(pattern: pattern, options: options) else {
 			return input
 		}
-		
 		let range = NSRange(input.startIndex..., in: input)
-		return regex.stringByReplacingMatches(in: input, options: [], range: range, withTemplate: replacement)
+		return regex.stringByReplacingMatches(
+			in: input, options: [], range: range, withTemplate: replacement
+		)
 	}
 	
 	// MARK: - Formatting
 	
-	private static func formatLogMessage(_ level: LogLevel, category: String, message: String, file: String, function: String, line: Int) -> String {
+	private static func formatLogMessage(
+		_ level: LogLevel,
+		category: String,
+		message: String,
+		file: String,
+		function: String,
+		line: Int
+	) -> String {
 		let fileName = URL(fileURLWithPath: file).lastPathComponent
-		let timestamp = ISO8601DateFormatter().string(from: Date())
+		let ts = ISO8601DateFormatter().string(from: Date())
 		
-		return """
-		[\(timestamp)] \(level.emoji) [\(category)] \(fileName):\(line) \(function)
-		  → \(message)
-		"""
+		return "[\(ts)] \(level.emoji) [\(category)] \(fileName):\(line) \(function)\n  → \(message)"
 	}
 	
-	// MARK: - In-Memory Buffer (for diagnostics)
+	// MARK: - Buffer
 	
 	private static var logBuffer: [String] = []
-	private static let maxBufferSize = 1000
-	private static let bufferQueue = DispatchQueue(label: "com.nudefndr.logbuffer")
+	private static let maxBuffer = 1000
+	private static let queue = DispatchQueue(label: "com.nudefndr.logbuffer")
 	
-	private static func appendToBuffer(_ message: String) {
-		bufferQueue.async {
-			logBuffer.append(message)
-			if logBuffer.count > maxBufferSize {
-				logBuffer.removeFirst()
-			}
+	private static func appendToBuffer(_ msg: String) {
+		queue.async {
+			logBuffer.append(msg)
+			if logBuffer.count > maxBuffer { logBuffer.removeFirst() }
 		}
 	}
 	
-	/// Retrieves recent logs from in-memory buffer
 	static func getRecentLogs(count: Int = 100) -> [String] {
-		return bufferQueue.sync {
-			Array(logBuffer.suffix(count))
-		}
+		queue.sync { Array(logBuffer.suffix(count)) }
 	}
 	
-	/// Clears the in-memory log buffer
 	static func clearBuffer() {
-		bufferQueue.async {
-			logBuffer.removeAll()
-		}
+		queue.async { logBuffer.removeAll() }
 	}
 	
-	// MARK: - Export & Diagnostics
+	// MARK: - Export
 	
 	struct LogExportPackage {
 		let logs: [String]
@@ -181,31 +172,26 @@ class SecureLogger {
 		let appVersion: String
 	}
 	
-	/// Exports logs for support/debugging (with PII already redacted)
 	static func exportLogs() -> LogExportPackage {
 		let logs = getRecentLogs(count: 1000)
 		let deviceInfo = "\(UIDevice.current.model) - iOS \(UIDevice.current.systemVersion)"
-		let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+		let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
 		
-		return LogExportPackage(
+		return .init(
 			logs: logs,
 			exportDate: Date(),
 			deviceInfo: deviceInfo,
-			appVersion: appVersion
+			appVersion: version
 		)
 	}
 }
 
-// TODO: Add support for remote log streaming in v2X
-// TODO: Expand redaction patterns 
-
-// MARK: - Security Event Logging
+// MARK: - Security Events
 
 extension SecureLogger {
-	/// Logs security-relevant events
 	static func logSecurityEvent(_ event: SecurityEvent, details: String = "") {
-		let message = details.isEmpty ? event.rawValue : "\(event.rawValue): \(details)"
-		log(.warning, category: "Security", message)
+		let msg = details.isEmpty ? event.rawValue : "\(event.rawValue): \(details)"
+		log(.warning, category: "Security", msg)
 	}
 	
 	enum SecurityEvent: String {

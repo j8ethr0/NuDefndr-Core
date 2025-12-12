@@ -3,132 +3,155 @@
 //
 // NuDefndr App - Core Privacy Component
 // App Website: https://nudefndr.com
-// Developer: Dro1d Labs
+// Developer: Dro1d Labs Security Engineering Team
+//
+// Privacy Guarantee:
+// This service performs analysis entirely on-device using Apple’s
+// SensitiveContentAnalysis framework. No image data or results ever leave
+// the user’s device.
 
-/*
- * Privacy Guarantee: This service performs analysis entirely on-device
- * using Apple's SensitiveContentAnalysis framework. No image data or 
- * analysis results are transmitted over the network.
- */
- 
 import Foundation
 import SensitiveContentAnalysis
 import UIKit
 import CoreGraphics
 import SwiftUI
+import os.log
 
-class SensitiveContentService {
+final class SensitiveContentService {
 
 	private let analyzer = SCSensitivityAnalyzer()
-	private let logger = Logger(subsystem: // *redacted*)
+	private let logger = Logger(subsystem: "com.nudefndr.core", category: "ContentAnalysis")
 	private let performanceMonitor = PerformanceMonitor.shared
 
+	// MARK: - Single Image Analysis
+
 	func analyzeImage(imageData: Data, assetIdentifier: String) async -> Bool {
-		// Thermal awareness check
 		await performanceMonitor.checkThermalState()
-		
-		guard let uiImage = UIImage(data: imageData) else {
+
+		guard let uiImage = UIImage(data: imageData),
+			  let cgImage = uiImage.cgImage else {
+			SecureLogger.warning("Failed to decode image for analysis", category: "SensitiveContent")
 			return false
 		}
-		guard let cgImage = uiImage.cgImage else {
-			return false
-		}
+
 		do {
+			let start = Date()
 			let result = try await analyzer.analyzeImage(cgImage)
-			performanceMonitor.recordAnalysis(duration: 0.0) // Placeholder
+			let duration = Date().timeIntervalSince(start)
+
+			performanceMonitor.recordAnalysis(duration: duration)
+
 			return result.isSensitive
 		} catch {
+			SecureLogger.error("Image analysis failed: \(error.localizedDescription)", category: "SensitiveContent")
 			return false
 		}
 	}
 
+	// MARK: - URL Based Analysis
+
 	func analyzeImage(at imageURL: URL) async -> Bool {
-		var shouldStopAccessing = false
+		var accessGranted = false
+
 		if imageURL.isFileURL {
-			shouldStopAccessing = imageURL.startAccessingSecurityScopedResource()
-			if !shouldStopAccessing {
-				// Warning: *redacted*
+			accessGranted = imageURL.startAccessingSecurityScopedResource()
+			if !accessGranted {
+				SecureLogger.warning("SecurityScopedResource access denied", category: "SensitiveContent")
 			}
 		}
 
 		defer {
-			if shouldStopAccessing {
-				imageURL.stopAccessingSecurityScopedResource()
-			}
+			if accessGranted { imageURL.stopAccessingSecurityScopedResource() }
 		}
 
 		do {
-			let imageData = try Data(contentsOf: imageURL)
-			let identifier = imageURL.absoluteString
-			return await analyzeImage(imageData: imageData, assetIdentifier: identifier)
+			let data = try Data(contentsOf: imageURL)
+			return await analyzeImage(imageData: data, assetIdentifier: imageURL.absoluteString)
 		} catch {
+			SecureLogger.error("Failed to load image data: \(error.localizedDescription)",
+							   category: "SensitiveContent")
 			return false
 		}
 	}
-	
-	/// Thermal-aware batch analysis with adaptive throttling
-	func analyzeBatchWithThermalAwareness(_ urls: [URL], progressCallback: @escaping (Double) -> Void) async -> [URL: Bool] {
+
+	// MARK: - Thermal-Aware Batch Analysis
+
+	func analyzeBatchWithThermalAwareness(
+		_ urls: [URL],
+		progressCallback: @escaping (Double) -> Void
+	) async -> [URL: Bool] {
+
 		var results: [URL: Bool] = [:]
 		let batchSize = performanceMonitor.adaptiveBatchSize()
-		
+
 		for (index, url) in urls.enumerated() {
-			// Check thermal state before each batch
+
 			if index % batchSize == 0 {
 				await performanceMonitor.checkThermalState()
+
+				if performanceMonitor.isThermalCritical {
+					SecureLogger.warning("Thermal critical reached — throttling batch analysis",
+										 category: "Thermal")
+					await Task.sleep(nanoseconds: 300_000_000)
+				}
 			}
-			
+
 			let result = await analyzeImage(at: url)
 			results[url] = result
-			
-			let progress = Double(index + 1) / Double(urls.count)
+
 			await MainActor.run {
-				progressCallback(progress)
+				progressCallback(Double(index + 1) / Double(urls.count))
 			}
-			
-			// Memory pressure handling
+
 			if performanceMonitor.isMemoryPressureHigh() {
-				await Task.sleep(nanoseconds: 100_000_000) // 100ms cooldown
+				await Task.sleep(nanoseconds: 100_000_000)
 			}
 		}
-		
+
 		return results
 	}
 }
 
-// Advanced Analysis
+// MARK: - Extensions
 
 extension SensitiveContentService {
-  
-  func analyzeBatch(_ urls: [URL], progressCallback: @escaping (Double) -> Void) async -> [URL: Bool] {
-	  var results: [URL: Bool] = [:]
-	  
-	  for (index, url) in urls.enumerated() {
-		  let result = await analyzeImage(at: url)
-		  results[url] = result
-		  
-		  let progress = Double(index + 1) / Double(urls.count)
-		  await MainActor.run {
-			  progressCallback(progress)
-		  }
-	  }
-	  
-	  return results
-  }
-  
-  /// Memory-optimized analysis
-  func analyzeWithMemoryOptimization(imageData: Data, maxSize: CGSize = CGSize(width: 2048, height: 2048)) async -> Bool {
-	  // memory optimization
-	  return await analyzeImage(imageData: imageData, assetIdentifier: "memory_optimized")
-  }
+
+	func analyzeBatch(
+		_ urls: [URL],
+		progressCallback: @escaping (Double) -> Void
+	) async -> [URL: Bool] {
+
+		var results: [URL: Bool] = [:]
+
+		for (index, url) in urls.enumerated() {
+			results[url] = await analyzeImage(at: url)
+
+			await MainActor.run {
+				progressCallback(Double(index + 1) / Double(urls.count))
+			}
+		}
+
+		return results
+	}
+
+	func analyzeWithMemoryOptimization(
+		imageData: Data,
+		maxSize: CGSize = CGSize(width: 2048, height: 2048)
+	) async -> Bool {
+
+		// Future enhancement: downscale before processing
+		return await analyzeImage(imageData: imageData, assetIdentifier: "memory_optimized")
+	}
 }
 
-class AnalysisStatsCollector: ObservableObject {
-  @Published var totalAnalyzed: Int = 0
-  @Published var averageAnalysisTime: TimeInterval = 0
-  @Published var memoryUsage: Int = 0
-  
-  func recordAnalysis(duration: TimeInterval) {
-	  totalAnalyzed += 1
-	  averageAnalysisTime = (averageAnalysisTime * Double(totalAnalyzed - 1) + duration) / Double(totalAnalyzed)
-  }
+final class AnalysisStatsCollector: ObservableObject {
+	@Published var totalAnalyzed = 0
+	@Published var averageAnalysisTime: TimeInterval = 0
+	@Published var memoryUsage: Int = 0
+
+	func recordAnalysis(duration: TimeInterval) {
+		totalAnalyzed += 1
+		averageAnalysisTime =
+			(averageAnalysisTime * Double(totalAnalyzed - 1) + duration) / Double(totalAnalyzed)
+	}
 }
