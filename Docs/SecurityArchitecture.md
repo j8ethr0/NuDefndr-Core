@@ -3,9 +3,6 @@
 ## Overview
 This document outlines the security architecture of NuDefndr's core privacy components, demonstrating our commitment to user privacy and data protection.
 
-# Nude Finder # Nude Defender # Nu Defndr # iOS
-
-
 ## Core Security Principles
 
 ### 1. Zero-Trust Architecture
@@ -23,6 +20,237 @@ This document outlines the security architecture of NuDefndr's core privacy comp
 - Hardware-backed key storage in Secure Enclave
 - Biometric authentication requirements
 - Panic mode with decoy vault architecture
+
+## High-Level Architecture
+
+					+---------------------------+
+					|   iOS Application Layer   |
+					|  (SwiftUI Views & State)  |
+					+-------------+-------------+
+								  |
+					+-------------v-------------+
+					|   Service Orchestration   |
+					| ScanManager | VaultManager|
+					|Authenticator| RouterState |
+					+-------------+-------------+
+								  |
+			+---------------------+---------------------+
+			|                     |                     |
+	+-------v-------+     +-------v--------+    +------v-------+
+	|   Analysis    |     |   Encryption   |    | Authentication|
+	|    Engine     |     |     Layer      |    |    System     |
+	+-------+-------+     +-------+--------+    +------+-------+
+			|                     |                     |
+	+-------v-------+     +-------v--------+    +------v-------+
+	| Apple ML      |     | VaultCrypto    |    | Biometric +  |
+	| Framework     |     | AES-256        |    | PIN Auth     |
+	| (iOS 17+)     |     | ChaCha20-Poly  |    | Face/Touch ID|
+	+---------------+     +-------+--------+    +------+-------+
+								  |                     |
+						  +-------v--------+    +------v-------+
+						  |   Keychain     |    | Secure       |
+						  |   Storage      |    | Enclave      |
+						  +----------------+    +--------------+
+
+
+## Data Flow: Photo Analysis Pipeline
+
+	+----------------+
+	| Photo Library  |
+	| (iOS Photos)   |
+	+-------+--------+
+			|
+			| 1. Request Access (Privacy)
+			v
+	+----------------+
+	| PhotoLibrary   |
+	| Service        |
+	+-------+--------+
+			|
+			| 2. Fetch Assets (Incremental)
+			v
+	+----------------+
+	|  ScanManager   |
+	| - Batch Queue  |
+	| - Throttling   |
+	+-------+--------+
+			|
+			| 3. Analyze (On-Device)
+			v
+	+-------------------+
+	| SensitiveContent  |
+	| Service (Apple ML)|
+	+--------+----------+
+			 |
+			 | 4. Results (Sensitive: Yes/No)
+			 v
+	+--------+----------+
+	|   Results Store   |
+	| (Ephemeral Cache) |
+	+--------+----------+
+			 |
+			 | 5. User Action: Move to Vault
+			 v
+	+--------+----------+
+	|   VaultManager    |
+	+--------+----------+
+			 |
+			 | 6. Encrypt with AES-256
+			 v
+	+--------+----------+
+	|   VaultCrypto     |
+	+--------+----------+
+			 |
+			 | 7. Store Encrypted
+			 v
+	+--------+----------+
+	| File System       |
+	| (App Container)   |
+	+-------------------+
+
+NOTE: Zero network activity during this entire pipeline
+
+
+## Vault Encryption Flow
+
+	+------------------+
+	|  Sensitive Photo |
+	+--------+---------+
+			 |
+			 | User Action: "Move to Vault"
+			 v
+	+--------+---------+
+	| Authentication   |
+	| Required         |
+	| - Face/Touch ID  |
+	| - PIN Fallback   |
+	+--------+---------+
+			 |
+			 | Success
+			 v
+	+--------+---------+
+	| Retrieve Key     |
+	| from Keychain    |
+	| (Secure Enclave) |
+	+--------+---------+
+			 |
+			 | Device-Bound Key
+			 v
+	+--------+---------+
+	| VaultCrypto      |
+	| Encrypt:         |
+	| AES-256-GCM or   |
+	| ChaCha20-Poly1305|
+	+--------+---------+
+			 |
+			 | Encrypted Blob + Nonce + Tag
+			 v
+	+--------+---------+
+	| Write to Disk    |
+	| App Container    |
+	| (Encrypted)      |
+	+------------------+
+
+
+## Panic Mode Architecture
+
+	+------------------+         +------------------+
+	|  Primary Vault   |         |   Decoy Vault    |
+	|                  |         |                  |
+	| - Real sensitive |         | - Innocuous      |
+	|   content        |         |   photos         |
+	| - Primary PIN    |         | - Panic PIN      |
+	| - Full features  |         | - Limited access |
+	+--------+---------+         +--------+---------+
+			 |                            |
+			 |                            |
+	+--------v----------------------------v---------+
+	|          Authentication Layer                |
+	|                                               |
+	|  Primary PIN   -->  Primary Vault            |
+	|  Panic PIN     -->  Decoy Vault              |
+	|                                               |
+	|  Indistinguishable UI/UX between modes       |
+	+-----------------------------------------------+
+
+
+## Key Management Lifecycle
+
+	1. App Install
+	   |
+	   v
+	Generate Symmetric Key (256-bit)
+	   |
+	   v
+	Derive Device-Bound Key (UDID + Salt)
+	   |
+	   v
+	Store in Keychain with Attributes:
+	- kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+	- Biometric protection required
+	   |
+	   v
+	Key Available for Encryption/Decryption
+	   |
+	   v
+	(Optional) Key Rotation Every 90 Days
+	   |
+	   v
+	Re-encrypt Vault with New Key
+	   |
+	   v
+	Old Key Zeroized from Memory
+
+
+## Security Boundaries
+
+	+---------------------------------------+
+	|          iOS Sandbox                  |
+	|  +----------------------------------+ |
+	|  |      NuDefndr Process            | |
+	|  |                                  | |
+	|  |  +----------------------------+  | |
+	|  |  | Analysis Engine            |  | |
+	|  |  | (No Network Access)        |  | |
+	|  |  +----------------------------+  | |
+	|  |                                  | |
+	|  |  +----------------------------+  | |
+	|  |  | Vault Storage              |  | |
+	|  |  | (Encrypted at Rest)        |  | |
+	|  |  +----------------------------+  | |
+	|  |                                  | |
+	|  +----------------------------------+ |
+	|                                       |
+	|  +----------------------------------+ |
+	|  | iOS Keychain (System Service)    | |
+	|  | - Device-Bound Keys              | |
+	|  | - Biometric Protection           | |
+	|  +----------------------------------+ |
+	|                                       |
+	|  +----------------------------------+ |
+	|  | Secure Enclave (Hardware)        | |
+	|  | - Key Generation                 | |
+	|  | - Crypto Operations              | |
+	|  +----------------------------------+ |
+	+---------------------------------------+
+			 |                    |
+			 v                    v
+	Network (BLOCKED)      Backup (Keys Excluded)
+
+
+## Threat Mitigation Summary
+
+| Threat                    | Mitigation                              |
+|---------------------------|-----------------------------------------|
+| Network Interception      | Zero network activity (verifiable)      |
+| Device Theft (Locked)     | Biometric + PIN required                |
+| Device Theft (Unlocked)   | Auto-lock after 30s                     |
+| Backup Extraction         | Keys not backed up (device-only)        |
+| Coercion                  | Panic Mode (decoy vault)                |
+| Memory Forensics          | Key clearing on background              |
+| Jailbreak                 | Detection (10 vectors)                  |
+| Code Tampering            | Signature validation                    |
+
 
 ## Component Security Details
 
@@ -46,14 +274,7 @@ This document outlines the security architecture of NuDefndr's core privacy comp
 - **Mitigation**: Dual-vault architecture, decoy data, emergency protocols
 - **Advanced Features**: Duress detection, emergency wipe capabilities
 
-## Security Architecture
-
-**Vault Encryption**: AES-256 with device-specific keys stored in Secure Enclave  
-**Panic Mode**: Separate decoy vault accessible via emergency PIN  
-**Key Management**: Hardware-backed keychain with biometric protection  
-**Version 2.0 Enhancements**: Incremental scanning architecture with unified timestamp system
-
-## Version 2.0 Security Improvements
+## Version 2.1.2 Security Improvements
 
 ### Scan Architecture Hardening
 - **Race Condition Fix**: Eliminated completion detection race in automatic scans
@@ -62,9 +283,15 @@ This document outlines the security architecture of NuDefndr's core privacy comp
 - **Adaptive Logic**: Background scans detect iOS throttling and automatically widen scan range
 
 ### Background Task Security
-- **Completion Guarantee**: 100ms delay ensures reliable completion state detection
+- **Completion Guarantee**: Reliable completion state detection
 - **State Isolation**: Automatic scan jobs never interfere with manual scan state
 - **Scheduling Discipline**: Single-pending-request prevents iOS throttling from excessive submissions
+
+### Vault Enhancements
+- **Smart Filtering**: Date-based organization with persistent preferences
+- **Enhanced Sorting**: Newest/oldest first with automatic date grouping
+- **Batch Operations**: Select all visible items with efficient filtering
+- **Memory Optimization**: Computed properties ensure efficient vault operations
 
 ## Audit and Compliance
 
@@ -82,6 +309,6 @@ This codebase has been designed with security auditing in mind:
 4. User adherence to strong authentication practices
 
 ---
-**Last Updated**: December 2025  
-**Version**: 2.0.0
+**Last Updated**: December 12, 2025  
+**Version**: 2.1.2  
 **Contact**: security@nudefndr.com
