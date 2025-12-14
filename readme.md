@@ -111,7 +111,6 @@ User Photo → Authentication Required → Retrieve Key from Keychain
 											  ↓
 									Write to App Container
 										(Encrypted)
-BACKTICK BACKTICK BACKTICK
 
 ### Panic Mode Architecture
 
