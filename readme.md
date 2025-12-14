@@ -317,7 +317,7 @@ Dro1d Labs retains all rights to the NuDefndr app, proprietary optimizations, an
 ## 📞 Contact
 
 - **Website:** [nudefndr.com](https://nudefndr.com)
-- **App Store:** [apps.apple.com/app/nudefndr](https://apps.apple.com/app/nudefndr)
+- **App Store:** [apps.apple.com/app/nudefndr]([dr](https://apps.apple.com/de/app/nudefndr/id6745149292))
 - **Support:** support@nudefndr.com
 - **Security:** security@nudefndr.com
 - **Developer:** Dro1d Labs Limited
@@ -338,5 +338,3 @@ Dro1d Labs retains all rights to the NuDefndr app, proprietary optimizations, an
 **Version:** 2.1.2  
 **Last Updated:** December 14, 2025  
 **Maintained by:** Dro1d Labs Limited
-
-Now let me create the GitHub templates and then generate visual assets:
