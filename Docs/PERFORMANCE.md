@@ -95,43 +95,4 @@ Total per-photo overhead:        0.000023s (23μs)
 
 **For 10,000 photos:** 0.23s overhead vs 284s saved = **99.9% efficiency**
 
-## Real-World User Scenarios
-
-### Scenario 1: Daily Scanner (Power User)
-- **Usage:** Scans "All Photos" daily, 50-100 new photos/day
-- **v1.7:** 28s scan × 365 days = 170 minutes/year
-- **v2.0:** 2s scan × 365 days = 12 minutes/year
-- **Time Saved:** 158 minutes/year (**93% reduction**)
-
-### Scenario 2: Weekly Scanner (Casual User)
-- **Usage:** Scans "Last 7 Days" weekly, ~500 photos
-- **v1.7:** 8.7s scan × 52 weeks = 7.5 minutes/year
-- **v2.0:** 1.1s scan × 52 weeks = 0.95 minutes/year
-- **Time Saved:** 6.55 minutes/year (**87% reduction**)
-
-### Scenario 3: Background-Only (Set-and-Forget)
-- **Usage:** Auto-scan every 3h, average 10 new photos
-- **v1.7:** 15s scan × 8/day × 365 = 12.2 hours/year
-- **v2.0:** 2.8s scan × 8/day × 365 = 2.3 hours/year
-- **Time Saved:** 9.9 hours/year (**81% reduction**)
-
-## Architecture Efficiency
-
-### Cache Hit Rates by Time Since Last Scan
-
-| Hours Since Last | Cache Hit Rate | Skip Ratio | Avg Duration |
-|------------------|----------------|------------|--------------|
-| < 1 hour | 99.2% | 99.2% | 0.2s |
-| 1-3 hours | 97.8% | 97.8% | 0.6s |
-| 3-6 hours | 94.1% | 94.1% | 1.4s |
-| 6-12 hours | 89.3% | 89.3% | 2.8s |
-| 12-24 hours | 76.4% | 76.4% | 6.2s |
-| > 24 hours | Catchup Mode | - | 8.9s |
-
-## Comparison with Industry
-
-| App | Initial Scan (10k photos) | Repeat Scan | Our Advantage |
-|-----|---------------------------|-------------|---------------|
-| NuDefndr v2.0 | 29.1s | 1.9s | **Baseline** |
-| Competitor A | 42.3s | 41.8s | **22x slower** (repeat) |
-| Competitor B | 38.7s
+## Real-World User Sc

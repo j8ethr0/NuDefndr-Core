@@ -1,46 +1,46 @@
 ---
 name: Bug Report
-about: Report a bug in NuDefndr Core components
+about: Report a bug in the NuDefndr Core components
 title: '[BUG] '
 labels: bug
 assignees: ''
 ---
 
 ## Bug Description
-<!-- A clear and concise description of what the bug is -->
+
+**Clear and concise description of the bug**
 
 ## Component Affected
-<!-- Which component has the bug? -->
+
 - [ ] VaultCrypto
-- [ ] KeychainSecure
+- [ ] SensitiveContentService
 - [ ] JailbreakDetection
 - [ ] AntiTampering
-- [ ] SensitiveContentService
 - [ ] PanicMode
 - [ ] Tests
 - [ ] Documentation
-- [ ] Other: 
+- [ ] Other (specify below)
 
 ## Steps to Reproduce
+
 1. 
 2. 
 3. 
 
 ## Expected Behavior
-<!-- What should happen? -->
+
+What should happen:
 
 ## Actual Behavior
-<!-- What actually happens? -->
+
+What actually happens:
 
 ## Environment
-- iOS Version: 
-- Device: 
-- NuDefndr Core Version: 
-- Jailbroken: Yes / No
 
-## Additional Context
-<!-- Add any other context, logs, or screenshots -->
+- **iOS Version:** 
+- **Device Model:** 
+- **Xcode Version:** 
+- **Swift Version:** 
+- **Repository Version/Commit:** 
 
----
-
-**Note:** This repository contains audit components only. For bugs in the production NuDefndr app, please use the in-app feedback or email support@nudefndr.com
+## Code Sample (if applicable)

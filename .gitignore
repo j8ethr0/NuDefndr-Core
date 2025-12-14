@@ -148,3 +148,16 @@ coverage/
 tmp/
 temp/
 *.tmp
+
+# Assets management
+!Assets/*.png
+Assets/*-hires.png
+Assets/*.psd
+Assets/originals/
+
+# Cleanup temp files
+README_NEW.swift
+README_WITH_IMAGES.md
+SETUP_GITHUB.md
+fix.txt
+SECURITY_ARCHITECTURE_SECTION.txt

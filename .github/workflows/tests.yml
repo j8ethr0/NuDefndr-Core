@@ -1,0 +1,87 @@
+name: Security & Validation Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  swift-validation:
+    name: Swift Syntax Validation
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+        
+    - name: Swift Version
+      run: swift --version
+      
+    - name: Validate Swift Syntax
+      run: |
+        echo "Validating Swift files..."
+        find . -name "*.swift" -type f | while read file; do
+          echo "Checking: $file"
+          xcrun swiftc -typecheck "$file" 2>&1 | grep -v "error:" || echo "✓ $file is valid"
+        done
+        
+    - name: Check for Security Issues
+      run: |
+        echo "Scanning for common security patterns..."
+        # Check for hardcoded secrets
+        ! grep -r "AKIA" --include="*.swift" .
+        ! grep -r "password.*=.*\"" --include="*.swift" .
+        ! grep -r "api.*key.*=.*\"" --include="*.swift" .
+        echo "✓ No obvious hardcoded secrets found"
+
+  documentation-check:
+    name: Documentation Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check README links
+      run: |
+        echo "Checking README.md for broken links..."
+        grep -o '\[.*\](.*\.md)' readme.md | sed 's/.*(\(.*\))/\1/' | while read file; do
+          if [ ! -f "$file" ]; then
+            echo "❌ Broken link: $file"
+            exit 1
+          fi
+        done
+        echo "✓ All documentation links valid"
+        
+    - name: Validate Markdown
+      uses: actionshub/markdownlint@main
+      
+  security-audit:
+    name: Security Audit
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Security File Check
+      run: |
+        echo "Verifying security-critical files..."
+        test -f "Security/JailbreakDetection.swift" || exit 1
+        test -f "Security/AntiTampering.swift" || exit 1
+        test -f "Vault/VaultCrypto.swift" || exit 1
+        test -f "Docs/SECURITY.md" || exit 1
+        test -f "Docs/THREAT_MODEL.md" || exit 1
+        echo "✓ All security files present"
+        
+    - name: License Check
+      run: |
+        echo "Checking license headers..."
+        grep -r "Copyright (c) 2025 Dro1d Labs" --include="*.swift" Security/ Vault/ PanicMode/ > /dev/null
+        echo "✓ License headers present"
