@@ -9,7 +9,7 @@
 **NuDefndr** is a privacy-first iOS app for detecting and securing sensitive content in your photo library—**entirely on-device**. This repository contains **auditable security components** extracted from the production app for transparency and independent verification.
 
 🔗 **Website:** [nudefndr.com](https://nudefndr.com)  
-📱 **App Store:** [Download NuDefndr](https://apps.apple.com/app/nudefndr)  
+📱 **App Store:** [Download NuDefndr](https://apps.apple.com/de/app/nudefndr/id6745149292)  
 🔐 **Developer:** Dro1d Labs Limited
 
 ---
