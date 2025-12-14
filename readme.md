@@ -111,11 +111,10 @@ User Photo → Authentication Required → Retrieve Key from Keychain
 											  ↓
 									Write to App Container
 										(Encrypted)
-```
+
 
 ### Panic Mode Architecture
 
-```
 ┌──────────────────┐         ┌──────────────────┐
 │  Primary Vault   │         │   Decoy Vault    │
 │                  │         │                  │
