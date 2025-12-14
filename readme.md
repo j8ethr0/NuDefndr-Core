@@ -128,7 +128,7 @@ User Photo → Authentication Required → Retrieve Key from Keychain
 					  ↓
 			Authentication Layer
 			(Indistinguishable UI)
-```
+
 
 ### Key Management Lifecycle
 
@@ -317,7 +317,7 @@ Dro1d Labs retains all rights to the NuDefndr app, proprietary optimizations, an
 ## 📞 Contact
 
 - **Website:** [nudefndr.com](https://nudefndr.com)
-- **App Store:** [apps.apple.com/app/nudefndr]([dr](https://apps.apple.com/de/app/nudefndr/id6745149292))
+- **App Store:** [apps.apple.com/app/nudefndr](https://apps.apple.com/de/app/nudefndr/id6745149292) 
 - **Support:** support@nudefndr.com
 - **Security:** security@nudefndr.com
 - **Developer:** Dro1d Labs Limited
