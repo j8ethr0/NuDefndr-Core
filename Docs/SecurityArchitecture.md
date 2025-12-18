@@ -274,6 +274,15 @@ NOTE: Zero network activity during this entire pipeline
 - **Mitigation**: Dual-vault architecture, decoy data, emergency protocols
 - **Advanced Features**: Duress detection, emergency wipe capabilities
 
+## Version 2.1.3 Security Improvements
+
+### Vault Privacy Controls
+- **Configurable Metrics Display**: Pro users can optionally enable item count display on lock screen
+- **Privacy-Preserving Queries**: Vault metadata accessible without decryption or unlock
+
+### Enhanced Lock Screen Architecture
+- **Real-Time Security Status**: Clear presentation of encryption status and storage mode
+
 ## Version 2.1.2 Security Improvements
 
 ### Scan Architecture Hardening
@@ -309,6 +318,6 @@ This codebase has been designed with security auditing in mind:
 4. User adherence to strong authentication practices
 
 ---
-**Last Updated**: December 12, 2025  
-**Version**: 2.1.2  
+**Last Updated**: December 18, 2025  
+**Version**: 2.1.3  
 **Contact**: security@nudefndr.com

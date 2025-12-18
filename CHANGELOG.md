@@ -5,6 +5,24 @@ All notable changes to NuDefndr Core Privacy Components are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3] - 2025-12-18
+
+### Added
+- **Vault Metrics toggle for Pro users** - Optional item count display on lock screen (default: OFF)
+- **Privacy-preserving vault statistics** - Item counts retrieved without requiring vault unlock
+- Enhanced vault lock screen UI with real-time security metrics display
+- Configurable information architecture for vault lock screen
+
+### Improved
+- Vault lock screen information hierarchy - Clearer security status presentation
+- Settings organization - Vault-related toggles consolidated in Security section
+- Metadata query performance - Faster item counts without decryption overhead
+
+### Security
+- Vault metrics respect Pro feature gating
+- Item counts accessible without exposing encrypted content
+- User-controlled metadata visibility settings
+
 ## [2.1.2] - 2025-12-12
 
 ### Added

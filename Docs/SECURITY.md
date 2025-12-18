@@ -81,6 +81,11 @@ _No security disclosures have been submitted yet._
 
 ## Security Update Log
 
+### 2.1.3 — December 2025
+- **Vault Metrics Privacy Controls** - Optional item count display with Pro feature gating
+- **Enhanced Lock Screen Architecture** - User-controlled metadata visibility
+- **Performance Optimizations** - Fast vault queries without decryption overhead
+
 ### 2.1.2 — December 2025
 - Enhanced vault organization with smart filtering
 - Advanced Redaction Toolkit (Blur, Pixelate, Black Box)
@@ -99,7 +104,7 @@ _No security disclosures have been submitted yet._
 
 ---
 
-**Last Updated:** December 12, 2025  
-**Version:** 2.1.2
+**Last Updated:** December 18, 2025  
+**Version:** 2.1.3
 **Contact:** security@nudefndr.com  
 Website: https://nudefndr.com
