@@ -24,6 +24,14 @@ class JailbreakDetector {
 		let confidenceLevel: ConfidenceLevel
 		let timestamp: Date
 		let riskScore: Double
+		let platform: Platform
+		let platformNotice: String?
+	}
+	
+	enum Platform: String {
+		case iOS = "iOS/iPadOS"
+		case macCatalyst = "macOS (Catalyst)"
+		case simulator = "Simulator"
 	}
 	
 	enum DetectionMethod: String, CaseIterable {
@@ -41,6 +49,7 @@ class JailbreakDetector {
 	
 	enum ConfidenceLevel: String {
 		case none = "Not Jailbroken"
+		case platformDifference = "Platform Architecture Difference"
 		case low = "Low Confidence (1-2 indicators)"
 		case medium = "Medium Confidence (3-4 indicators)"
 		case high = "High Confidence (5-7 indicators)"
@@ -51,7 +60,42 @@ class JailbreakDetector {
 	
 	/// Performs comprehensive multi-layer jailbreak detection
 	/// Returns detailed report with confidence scoring
+	/// v2.1.5: Now includes platform-aware analysis
 	static func detectJailbreak() -> DetectionReport {
+		// Platform identification
+		let platform = identifyPlatform()
+		
+		// Simulator bypass - always clean
+		#if targetEnvironment(simulator)
+		return DetectionReport(
+			isJailbroken: false,
+			detectionMethods: [:],
+			confidenceLevel: .none,
+			timestamp: Date(),
+			riskScore: 0.0,
+			platform: .simulator,
+			platformNotice: "Running in Xcode Simulator - Security checks disabled"
+		)
+		#endif
+		
+		// Mac Catalyst platform notice
+		#if targetEnvironment(macCatalyst)
+		return DetectionReport(
+			isJailbroken: false,
+			detectionMethods: ["macOS Platform": true],
+			confidenceLevel: .platformDifference,
+			timestamp: Date(),
+			riskScore: 0.0,
+			platform: .macCatalyst,
+			platformNotice: """
+				Running on macOS with Catalyst. macOS has different security architecture \
+				than iOS/iPadOS. Your vault remains encrypted, but macOS does not provide \
+				the same sandboxing guarantees as iOS devices. This is normal and expected.
+				"""
+		)
+		#endif
+		
+		// iOS/iPadOS full detection
 		var results: [DetectionMethod: Bool] = [:]
 		
 		// Core detection vectors
@@ -62,7 +106,7 @@ class JailbreakDetector {
 		results[.urlSchemeCheck] = checkCydiaURLScheme()
 		results[.writeTest] = checkSystemWriteAccess()
 		
-		// Advanced detection vectors (v2.1.1+)
+		// Advanced detection vectors (v2.1+)
 		results[.symlinkAnalysis] = analyzeFilesystemSymlinks()
 		results[.forkRestriction] = testKernelSecurityRestrictions()
 		results[.permissionAudit] = auditSystemPermissions()
@@ -91,8 +135,22 @@ class JailbreakDetector {
 			detectionMethods: results,
 			confidenceLevel: confidence,
 			timestamp: Date(),
-			riskScore: riskScore
+			riskScore: riskScore,
+			platform: .iOS,
+			platformNotice: nil
 		)
+	}
+	
+	// MARK: - Platform Identification
+	
+	private static func identifyPlatform() -> Platform {
+		#if targetEnvironment(simulator)
+		return .simulator
+		#elseif targetEnvironment(macCatalyst)
+		return .macCatalyst
+		#else
+		return .iOS
+		#endif
 	}
 	
 	// MARK: - Core Detection Methods
@@ -169,6 +227,7 @@ class JailbreakDetector {
 	
 	/// Dynamic library injection detection: Scans loaded dylibs for hooking frameworks
 	/// Detects MobileSubstrate, Substitute, Frida, Cycript, and custom injections
+	/// v2.1.5: Filters out legitimate debugging tools (Xcode View Debugger)
 	private static func checkDynamicLibraryInjection() -> Bool {
 		let imageCount = _dyld_image_count()
 		
@@ -185,6 +244,11 @@ class JailbreakDetector {
 		for i in 0..<imageCount {
 			guard let imageName = _dyld_get_image_name(i) else { continue }
 			let imageNameStr = String(cString: imageName)
+			
+			// Filter out Xcode debugging tools
+			if imageNameStr.contains("libViewDebuggerSupport") {
+				continue
+			}
 			
 			for lib in suspiciousLibs {
 				if imageNameStr.lowercased().contains(lib.lowercased()) {
@@ -225,7 +289,7 @@ class JailbreakDetector {
 		return false
 	}
 	
-	// MARK: - Advanced Detection (v2.1.1+)
+	// MARK: - Advanced Detection (v2.1+)
 	
 	/// Symlink analysis: Detects filesystem modifications common in jailbreaks
 	private static func analyzeFilesystemSymlinks() -> Bool {
@@ -279,12 +343,20 @@ class JailbreakDetector {
 	}
 	
 	/// Runtime environment scanner: Detects suspicious environment variables
+	/// v2.1.5: Filters development tools to reduce false positives
 	private static func scanRuntimeEnvironment() -> Bool {
 		let suspiciousVars = ["DYLD_INSERT_LIBRARIES", "_MSSafeMode", "_SafeMode"]
 		
 		for envVar in suspiciousVars {
-			if let value = getenv(envVar), !String(cString: value).isEmpty {
-				return true
+			if let value = getenv(envVar) {
+				let valueStr = String(cString: value)
+				if !valueStr.isEmpty {
+					// Filter out Xcode debugger - legitimate development tool
+					if envVar == "DYLD_INSERT_LIBRARIES" && valueStr.contains("libViewDebuggerSupport") {
+						continue
+					}
+					return true
+				}
 			}
 		}
 		
@@ -360,31 +432,43 @@ class JailbreakDetector {
 
 extension JailbreakDetector {
 	/// Generates human-readable detection report
+	/// v2.1.5: Enhanced with platform information
 	static func generateDetectionReport() -> String {
 		let report = detectJailbreak()
 		
 		var output = """
 		=== NuDefndr Jailbreak Detection Report ===
+		Platform: \(report.platform.rawValue)
 		Status: \(report.isJailbroken ? "⚠️ JAILBROKEN" : "✅ SECURE")
 		Confidence: \(report.confidenceLevel.rawValue)
 		Risk Score: \(String(format: "%.2f", report.riskScore * 100))%
 		Timestamp: \(report.timestamp)
 		
-		Detection Vectors:
 		"""
+		
+		if let notice = report.platformNotice {
+			output += """
+			Platform Notice:
+			\(notice)
+			
+			"""
+		}
+		
+		output += "Detection Vectors:\n"
 		
 		for (method, detected) in report.detectionMethods.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
 			let icon = detected ? "🔴" : "✅"
-			output += "\n  \(icon) \(method.rawValue): \(detected ? "DETECTED" : "Clear")"
+			output += "  \(icon) \(method.rawValue): \(detected ? "DETECTED" : "Clear")\n"
 		}
 		
 		output += """
 		
 		===========================================
-		NuDefndr Security Engine v2.1.1
+		NuDefndr Security Engine v2.1.5
 		© 2025 Dro1d Labs Limited
 		"""
 		
 		return output
 	}
 }
+
