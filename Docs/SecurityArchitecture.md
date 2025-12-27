@@ -108,7 +108,7 @@ This document outlines the security architecture of NuDefndr's core privacy comp
 	| (App Container)   |
 	+-------------------+
 
-NOTE: Zero network activity during this entire pipeline
+NOTE: Zero network activity during this entire pipeline.
 
 
 ## Vault Encryption Flow
@@ -117,7 +117,7 @@ NOTE: Zero network activity during this entire pipeline
 	|  Sensitive Photo |
 	+--------+---------+
 			 |
-			 | User Action: "Move to Vault"
+			 | User Action: "Move/Copy to Vault"
 			 v
 	+--------+---------+
 	| Authentication   |
@@ -157,8 +157,8 @@ NOTE: Zero network activity during this entire pipeline
 	+------------------+         +------------------+
 	|  Primary Vault   |         |   Decoy Vault    |
 	|                  |         |                  |
-	| - Real sensitive |         | - Innocuous      |
-	|   content        |         |   photos         |
+	| - Real sensitive |         | - Empty Vault    |
+	|   content        |         |                  |
 	| - Primary PIN    |         | - Panic PIN      |
 	| - Full features  |         | - Limited access |
 	+--------+---------+         +--------+---------+

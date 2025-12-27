@@ -332,6 +332,6 @@ Dro1d Labs retains all rights to the NuDefndr app, proprietary optimizations, an
 
 ---
 
-**Version:** 2.1.3  
-**Last Updated:** December 18, 2025  
+**Version:** 2.1.5
+**Last Updated:** December 27, 2025  
 **Maintained by:** Dro1d Labs Limited
