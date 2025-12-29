@@ -188,7 +188,7 @@ struct SecureBuffer {
 	private var buffer: UnsafeMutableRawPointer
 	private let size: Int
 	
-	init(size: Int) throws {
+	init(size: Int) throws { // partial call
 		guard let ptr = mlock(UnsafeMutableRawPointer.allocate(byteCount: size, alignment: 1), size) == 0
 			? UnsafeMutableRawPointer.allocate(byteCount: size, alignment: 1) : nil else {
 			throw CryptoError.memoryAllocationFailed
