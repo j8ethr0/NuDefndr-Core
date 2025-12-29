@@ -133,7 +133,7 @@ class CryptoTests: XCTestCase {
 		
 		XCTAssertEqual(report.keySize, 256, "Key size should be 256 bits")
 		XCTAssertGreaterThan(report.entropy, 7.0, "Entropy should be high for cryptographic keys")
-		XCTAssertEqual(report.rating, .military, "256-bit keys should be rated as military-grade")
+		XCTAssertEqual(report.rating, .military, "256-bit keys should be rated as industry standard min.")
 	}
 	
 	func testWeakKeyDetection() {

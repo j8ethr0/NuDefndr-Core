@@ -151,7 +151,7 @@ final class VaultCrypto {
 		let entropy = calculateEntropy(keyData)
 		let keySize = keyData.count * 8
 		let rating: EncryptionStrength
-		if keySize >= 256 && entropy > 7.5 { rating = .military }
+		if keySize >= 256 && entropy > 7.5 { rating = .industry }
 		else if keySize >= 256 { rating = .enhanced }
 		else { rating = .standard }
 		return KeyStrengthReport(entropy: entropy, keySize: keySize, algorithm: "ChaCha20-Poly1305", rating: rating)
@@ -173,13 +173,13 @@ final class VaultCrypto {
 enum EncryptionStrength: String, CaseIterable {
 	case standard = "Standard"
 	case enhanced = "Enhanced"
-	case military = "Military-Grade"
+	case industry = "Industry-Standard"
 	
 	var description: String {
 		switch self {
 		case .standard: return "AES-256 Standard"
 		case .enhanced: return "AES-256 + ChaCha20"
-		case .military: return "Military-Grade Multi-Layer"
+		case .industry: return "Industry-Standard Multi-Layer"
 		}
 	}
 }

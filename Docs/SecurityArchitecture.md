@@ -6,7 +6,7 @@ This document outlines the security architecture of NuDefndr's core privacy comp
 ## Core Security Principles
 
 ### 1. Zero-Trust Architecture
-- All data encrypted at rest using military-grade encryption
+- All data encrypted at rest using End-to-end 256-bit encryption with ChaCha20-Poly1305
 - Multiple layers of authentication and authorization
 - Device-bound encryption keys with hardware backing
 
@@ -261,7 +261,7 @@ NOTE: Zero network activity during this entire pipeline.
 
 ### VaultCrypto
 - **Threat Model**: Protect encrypted data from unauthorized access
-- **Mitigation**: Military-grade encryption, key rotation, secure memory management
+- **Mitigation**: Industry-standard encryption, key rotation, secure memory management
 - **Standards Compliance**: FIPS 140-2 Level 1 where supported
 
 ### KeychainSecure
