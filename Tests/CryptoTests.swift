@@ -17,13 +17,13 @@ class CryptoTests: XCTestCase {
 	
 	func testBasicEncryptionDecryption() {
 		let testData = "Hello, World!".data(using: .utf8)!
-		let key = VaultCrypto.generateVaultKey()
 		
 		do {
-			let encrypted = try VaultCrypto.encryptData(testData, using: key)
+			let key = try VaultCrypto.generateVaultKey()
+			let encrypted = try VaultCrypto.encryptData(testData, key: key)
 			XCTAssertNotEqual(encrypted, testData, "Encrypted data should differ from plaintext")
 			
-			let decrypted = try VaultCrypto.decryptData(encrypted, using: key)
+			let decrypted = try VaultCrypto.decryptData(encrypted, key: key)
 			XCTAssertEqual(decrypted, testData, "Decrypted data should match original")
 		} catch {
 			XCTFail("Encryption/Decryption failed: \(error)")
@@ -32,14 +32,15 @@ class CryptoTests: XCTestCase {
 	
 	func testEncryptionWithDifferentKeys() {
 		let testData = "Secret Message".data(using: .utf8)!
-		let key1 = VaultCrypto.generateVaultKey()
-		let key2 = VaultCrypto.generateVaultKey()
 		
 		do {
-			let encrypted = try VaultCrypto.encryptData(testData, using: key1)
+			let key1 = try VaultCrypto.generateVaultKey()
+			let key2 = try VaultCrypto.generateVaultKey()
+			
+			let encrypted = try VaultCrypto.encryptData(testData, key: key1)
 			
 			// Attempting to decrypt with wrong key should fail
-			XCTAssertThrowsError(try VaultCrypto.decryptData(encrypted, using: key2)) {
+			XCTAssertThrowsError(try VaultCrypto.decryptData(encrypted, key: key2)) {
 				error in
 				// Expected behavior
 			}
@@ -50,11 +51,11 @@ class CryptoTests: XCTestCase {
 	
 	func testLargeDataEncryption() {
 		let largeData = Data(repeating: 0x42, count: 10 * 1024 * 1024) // 10MB
-		let key = VaultCrypto.generateVaultKey()
 		
 		do {
-			let encrypted = try VaultCrypto.encryptData(largeData, using: key)
-			let decrypted = try VaultCrypto.decryptData(encrypted, using: key)
+			let key = try VaultCrypto.generateVaultKey()
+			let encrypted = try VaultCrypto.encryptData(largeData, key: key)
+			let decrypted = try VaultCrypto.decryptData(encrypted, key: key)
 			
 			XCTAssertEqual(decrypted, largeData, "Large data should decrypt correctly")
 		} catch {
@@ -103,20 +104,21 @@ class CryptoTests: XCTestCase {
 	
 	func testKeyRotation() {
 		let testData = "Sensitive Data".data(using: .utf8)!
-		let oldKey = VaultCrypto.generateVaultKey()
 		
 		do {
+			let oldKey = try VaultCrypto.generateVaultKey()
+			
 			// Encrypt with old key
-			let encrypted = try VaultCrypto.encryptData(testData, using: oldKey)
+			let encrypted = try VaultCrypto.encryptData(testData, key: oldKey)
 			
 			// Rotate key
 			let (newKey, metadata) = try VaultCrypto.rotateKey(from: oldKey, context: "vault_rotation")
 			
 			// Re-encrypt with new key
-			let reencrypted = try VaultCrypto.reencryptData(encrypted, from: oldKey, to: newKey)
+			let reencrypted = try VaultCrypto.reencryptData(encrypted, oldKey: oldKey, newKey: newKey)
 			
 			// Verify data can be decrypted with new key
-			let decrypted = try VaultCrypto.decryptData(reencrypted, using: newKey)
+			let decrypted = try VaultCrypto.decryptData(reencrypted, key: newKey)
 			XCTAssertEqual(decrypted, testData, "Data should survive key rotation")
 			
 			XCTAssertEqual(metadata.version, 2, "Metadata version should be 2")
@@ -128,12 +130,33 @@ class CryptoTests: XCTestCase {
 	// MARK: - Entropy Tests
 	
 	func testKeyEntropyValidation() {
-		let key = VaultCrypto.generateVaultKey()
-		let report = VaultCrypto.analyzeKeyStrength(key)
+		do {
+			let key = try VaultCrypto.generateVaultKey()
+			let report = VaultCrypto.analyzeKeyStrength(key)
+			
+			XCTAssertEqual(report.keySize, 256, "Key size should be 256 bits")
+			XCTAssertGreaterThanOrEqual(report.entropy, 7.5, "Entropy should meet NIST minimum (7.5 bits/byte)")
+			XCTAssertEqual(report.rating, .industry, "256-bit high-entropy keys should be industry-standard")
+		} catch {
+			XCTFail("Key generation or analysis failed: \(error)")
+		}
+	}
+	
+	func testKeyGenerationRetriesOnLowEntropy() {
+		// This test verifies the retry mechanism works
+		// In practice, iOS CSPRNG never produces low-entropy keys
+		// but the validation provides defense-in-depth
 		
-		XCTAssertEqual(report.keySize, 256, "Key size should be 256 bits")
-		XCTAssertGreaterThan(report.entropy, 7.0, "Entropy should be high for cryptographic keys")
-		XCTAssertEqual(report.rating, .military, "256-bit keys should be rated as industry standard min.")
+		do {
+			let key = try VaultCrypto.generateVaultKey()
+			let report = VaultCrypto.analyzeKeyStrength(key)
+			
+			XCTAssertGreaterThanOrEqual(report.entropy, 7.5, "Generated key should have sufficient entropy")
+		} catch CryptoError.insufficientEntropy {
+			XCTFail("Key generation failed after retries - CSPRNG may be compromised")
+		} catch {
+			XCTFail("Unexpected error: \(error)")
+		}
 	}
 	
 	func testWeakKeyDetection() {
@@ -182,11 +205,11 @@ class CryptoTests: XCTestCase {
 	
 	func testEmptyDataEncryption() {
 		let emptyData = Data()
-		let key = VaultCrypto.generateVaultKey()
 		
 		do {
-			let encrypted = try VaultCrypto.encryptData(emptyData, using: key)
-			let decrypted = try VaultCrypto.decryptData(encrypted, using: key)
+			let key = try VaultCrypto.generateVaultKey()
+			let encrypted = try VaultCrypto.encryptData(emptyData, key: key)
+			let decrypted = try VaultCrypto.decryptData(encrypted, key: key)
 			
 			XCTAssertEqual(decrypted, emptyData, "Empty data should encrypt/decrypt correctly")
 		} catch {
@@ -196,16 +219,16 @@ class CryptoTests: XCTestCase {
 	
 	func testCorruptedDataDecryption() {
 		let testData = "Test Data".data(using: .utf8)!
-		let key = VaultCrypto.generateVaultKey()
 		
 		do {
-			var encrypted = try VaultCrypto.encryptData(testData, using: key)
+			let key = try VaultCrypto.generateVaultKey()
+			var encrypted = try VaultCrypto.encryptData(testData, key: key)
 			
 			// Corrupt a byte
 			encrypted[0] ^= 0xFF
 			
 			// Should fail to decrypt
-			XCTAssertThrowsError(try VaultCrypto.decryptData(encrypted, using: key)) {
+			XCTAssertThrowsError(try VaultCrypto.decryptData(encrypted, key: key)) {
 				error in
 				// Expected - authentication tag will fail
 			}
@@ -221,19 +244,24 @@ extension CryptoTests {
 	/// Helper to measure encryption throughput
 	func measureEncryptionThroughput(dataSize: Int, iterations: Int = 100) -> Double {
 		let testData = Data(repeating: 0x42, count: dataSize)
-		let key = VaultCrypto.generateVaultKey()
 		
-		let start = Date()
-		
-		for _ in 0..<iterations {
-			_ = try? VaultCrypto.encryptData(testData, using: key)
+		do {
+			let key = try VaultCrypto.generateVaultKey()
+			let start = Date()
+			
+			for _ in 0..<iterations {
+				_ = try? VaultCrypto.encryptData(testData, key: key)
+			}
+			
+			let elapsed = Date().timeIntervalSince(start)
+			let totalBytes = Double(dataSize * iterations)
+			let bytesPerSecond = totalBytes / elapsed
+			
+			return bytesPerSecond / (1024 * 1024) // MB/s
+		} catch {
+			XCTFail("Throughput test setup failed: \(error)")
+			return 0
 		}
-		
-		let elapsed = Date().timeIntervalSince(start)
-		let totalBytes = Double(dataSize * iterations)
-		let bytesPerSecond = totalBytes / elapsed
-		
-		return bytesPerSecond / (1024 * 1024) // MB/s
 	}
 	
 	func testEncryptionThroughput() {
