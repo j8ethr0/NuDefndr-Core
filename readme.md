@@ -132,8 +132,7 @@ User Photo → Authentication Required → Retrieve Key from Keychain
 1. **App Install** → Generate 256-bit symmetric key
 2. **Key Derivation** → Device-bound key (UDID + salt)
 3. **Keychain Storage** → `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` + biometric protection
-4. **Key Rotation** → Every 90 days (optional) with vault re-encryption
-5. **Key Zeroization** → Secure memory clearing on deallocation
+4. **Key Zeroization** → Secure memory clearing on deallocation
 
 ---
 
@@ -332,6 +331,6 @@ Dro1d Labs retains all rights to the NuDefndr app, proprietary optimizations, an
 
 ---
 
-**Version:** 2.1.5
-**Last Updated:** December 27, 2025  
+**Version:** 2.1.7
+**Last Updated:** January 2, 2026  
 **Maintained by:** Dro1d Labs Limited

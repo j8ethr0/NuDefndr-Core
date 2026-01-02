@@ -8,10 +8,10 @@ Version 2.0 introduces a ground-breaking incremental scanning engine that delive
 
 **Test Environment:**
 - Device: iPhone 15 Pro (A17 Pro)
-- iOS Version: 18.1+
+- iOS Version: 18.2
 - Photo Library: 10,000+ images
 - Test Duration: 100 scan iterations per scenario
-- Last Updated: December 2025
+- Last Updated: January 2026
 
 **Metrics Collected:**
 - Total scan duration (seconds)
@@ -67,32 +67,4 @@ All Time:      v1.7: 312 MB → v2.0: 298 MB (-4.5%)
 Last 1 Year:   v1.7: 284 MB → v2.0: 256 MB (-9.9%)
 Last 90 Days:  v1.7: 198 MB → v2.0: 167 MB (-15.7%)
 Last 30 Days:  v1.7: 142 MB → v2.0: 89 MB  (-37.3%)
-Last 7 Days:   v1.7: 87 MB  → v2.0: 34 MB  (-60.9%)
-```
-
-**Key Insight:** Shorter ranges benefit most from incremental architecture due to higher skip ratios.
-
-## Battery Impact Analysis
-
-### Energy Consumption (mAh per 1000 photos analyzed)
-
-| Scan Type | v1.7 | v2.0 | Savings |
-|-----------|------|------|---------|
-| Full Analysis | 45 mAh | 43 mAh | 4.4% |
-| Incremental (90% cache) | N/A | 6 mAh | **86.7%** |
-| Background Scan | 38 mAh | 8 mAh | **78.9%** |
-
-## Timestamp Skip Logic Performance
-
-### Skip Decision Latency
-
-```
-Photo timestamp check:           0.000012s (12μs)
-Modification date comparison:    0.000008s (8μs)
-Range boundary validation:       0.000003s (3μs)
-Total per-photo overhead:        0.000023s (23μs)
-```
-
-**For 10,000 photos:** 0.23s overhead vs 284s saved = **99.9% efficiency**
-
-## Real-World User Sc
+Last 7 Days:   v1.7: 87 MB  → v2.0: 3

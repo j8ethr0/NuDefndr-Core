@@ -5,6 +5,21 @@ All notable changes to NuDefndr Core Privacy Components are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.7] - 2026-01-02
+
+### Documentation
+- Removed references to unimplemented key rotation features
+- Updated key management lifecycle documentation for accuracy
+- Refreshed dates across all documentation files
+- Minor clarifications to security architecture
+
+## [2.1.6] - 2025-12-29
+
+### Maintenance
+- Repository housekeeping and documentation consistency
+- Performance benchmark verification on iOS 18.2
+- Security policy updates
+
 ## [2.1.5] - 2025-12-24
 
 ### Enhancements:
@@ -141,7 +156,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - ChaCha20-Poly1305 encryption alongside AES-256
 - PBKDF2 key derivation with 100K+ iterations
-- Key rotation and forward secrecy support
 - Entropy validation and NIST compliance checks
 
 ### Security
@@ -199,19 +213,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Roadmap
 
 ### Planned for 2.2.0
-- Jailbreak detection enhancements
+- Enhanced jailbreak detection for iOS 18.3+
 - Reproducible builds for audit verification
-- Enhanced hardware security module integration
 - Improved performance monitoring
+- Extended documentation for security researchers
 
 ### Under Consideration
-- Secure boot verification
+- Key rotation and forward secrecy capabilities
+- Secure boot verification enhancements
 - Multi-layer encryption profiles
 - Advanced threat intelligence integration
-- Extended platform support (iPadOS optimizations)
+- Extended platform support (visionOS considerations)
 
 ---
 
 **Repository:** [github.com/defndr-labs/NuDefndr-Core](https://github.com/defndr-labs/NuDefndr-Core)  
 **Website:** [nudefndr.com](https://nudefndr.com)  
 **Developer:** Dro1d Labs Limited
+
+**Version:** 2.1.7
+**Last Updated:** January 2, 2026  
+**Maintained by:** Dro1d Labs Limited

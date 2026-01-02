@@ -81,6 +81,11 @@ _No security disclosures have been submitted yet._
 
 ## Security Update Log
 
+### 2.1.7 — January 2026
+- **Documentation Accuracy** - Removed references to unimplemented features
+- **Repository Maintenance** - Updated all dates and version numbers
+- **Security Architecture** - Clarified key management lifecycle
+
 ### 2.1.3 — December 2025
 - **Vault Metrics Privacy Controls** - Optional item count display with Pro feature gating
 - **Enhanced Lock Screen Architecture** - User-controlled metadata visibility
@@ -104,7 +109,7 @@ _No security disclosures have been submitted yet._
 
 ---
 
-**Last Updated:** December 18, 2025  
-**Version:** 2.1.3
+**Last Updated:** January 2, 2026  
+**Version:** 2.1.7
 **Contact:** security@nudefndr.com  
 Website: https://nudefndr.com

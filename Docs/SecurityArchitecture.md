@@ -193,13 +193,7 @@ NOTE: Zero network activity during this entire pipeline.
 	Key Available for Encryption/Decryption
 	   |
 	   v
-	(Optional) Key Rotation Every 90 Days
-	   |
-	   v
-	Re-encrypt Vault with New Key
-	   |
-	   v
-	Old Key Zeroized from Memory
+	Key Zeroized from Memory on Deallocation
 
 
 ## Security Boundaries
@@ -318,6 +312,6 @@ This codebase has been designed with security auditing in mind:
 4. User adherence to strong authentication practices
 
 ---
-**Last Updated**: December 18, 2025  
-**Version**: 2.1.3  
+**Last Updated**: January 2, 2026  
+**Version**: 2.1.7  
 **Contact**: security@nudefndr.com
