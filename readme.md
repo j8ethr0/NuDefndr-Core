@@ -72,7 +72,6 @@ This repository contains the **auditable privacy and security architecture** fro
 - **`ScanRangeOption.swift`** — Immutable scan range definitions (7 days, 30 days, etc.)
 
 ### Security & Encryption
-- **`VaultCrypto.swift`** — AES-256 + ChaCha20-Poly1305 encryption with key rotation
 - **`KeychainSecure.swift`** — Secure Enclave key derivation and lifecycle management
 - **`JailbreakDetection.swift`** — 10-vector jailbreak detection system
 - **`AntiTampering.swift`** — Code signature validation and integrity checks
@@ -147,7 +146,6 @@ swift test --filter CryptoTests
 - AES-256 encryption/decryption round-trips
 - ChaCha20-Poly1305 authenticated encryption
 - PBKDF2 key derivation consistency
-- Key rotation and re-encryption
 - Entropy validation (NIST SP 800-90B)
 - Timing attack resistance
 
