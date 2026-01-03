@@ -6,7 +6,7 @@
 
 # NuDefndr — Core Privacy Components
 
-**NuDefndr** is a privacy-first iOS app for detecting and securing sensitive content in your photo library—**entirely on-device**. This repository contains **auditable security components** extracted from the production app for transparency and independent verification.
+**NuDefndr** is a privacy-first iOS app for detecting and securing sensitive content in your photo library—**entirely on-device**. This repository contains **auditable security components** extra[...] 
 
 🔗 **Website:** [nudefndr.com](https://nudefndr.com)  
 📱 **App Store:** [Download NuDefndr](https://apps.apple.com/de/app/nudefndr/id6745149292)  
@@ -63,7 +63,7 @@ Keys are stored with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, preventing 
 
 ---
 
-## 🧠 Repository Components
+## 🧱 Repository Components
 
 This repository contains the **auditable privacy and security architecture** from NuDefndr. It is **not a complete app**—proprietary UI, optimizations, and business logic remain closed-source.
 
@@ -72,6 +72,7 @@ This repository contains the **auditable privacy and security architecture** fro
 - **`ScanRangeOption.swift`** — Immutable scan range definitions (7 days, 30 days, etc.)
 
 ### Security & Encryption
+- **`VaultCrypto.swift`** — AES-256 + ChaCha20-Poly1305 encryption
 - **`KeychainSecure.swift`** — Secure Enclave key derivation and lifecycle management
 - **`JailbreakDetection.swift`** — 10-vector jailbreak detection system
 - **`AntiTampering.swift`** — Code signature validation and integrity checks
@@ -98,18 +99,18 @@ This repository contains the **auditable privacy and security architecture** fro
 ### Encryption Flow
 
 User Photo → Authentication Required → Retrieve Key from Keychain
-											  ↓
-									 Secure Enclave Key
-											  ↓
-									   VaultCrypto
-									(AES-256-GCM or
-								   ChaCha20-Poly1305)
-											  ↓
-									Encrypted Blob +
-									 Nonce + Auth Tag
-											  ↓
-									Write to App Container
-										(Encrypted)
+                                              ↓
+                                       Secure Enclave Key
+                                              ↓
+                                       VaultCrypto
+                                    (AES-256-GCM or
+                                   ChaCha20-Poly1305)
+                                              ↓
+                                    Encrypted Blob +
+                                     Nonce + Auth Tag
+                                              ↓
+                                    Write to App Container
+                                        (Encrypted)
 
 ### Panic Mode Architecture
 
@@ -120,11 +121,11 @@ User Photo → Authentication Required → Retrieve Key from Keychain
 │ • Primary PIN    │         │ • Panic PIN      │
 │ • Full features  │         │ • Limited access │
 └────────┬─────────┘         └────────┬─────────┘
-		 │                            │
-		 └────────────┬───────────────┘
-					  ↓
-			Authentication Layer
-			(Indistinguishable UI)
+         │                            │
+         └────────────┬───────────────┘
+                      ↓
+            Authentication Layer
+            (Indistinguishable UI)
 
 ### Key Management Lifecycle
 
@@ -222,7 +223,7 @@ Auditors and security researchers can verify:
 - ✅ **Image data never uploaded** or cached externally
 - ✅ **Vault data inaccessible** without Secure Enclave key
 - ✅ **Panic Mode** prevents exposure of primary vault
-- ✅ **Tampering attempts** detectable at runtime
+- ✅ **Tampering attempts**detectable at runtime
 
 ### Audit Process
 
